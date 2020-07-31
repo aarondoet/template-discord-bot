@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+				 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<groupId>de.l0c4lh057</groupId>
+	<artifactId>templatebot</artifactId>
+	<version>3.0.0</version>
+	
+	<dependencies>
+		<!--
+			TODO: UPDATE VERSIONS IN STRINGS (command.info.libraries.description) FILES WHEN UPDATING DEPENDENCIES
+		-->
+		
+		<!-- DotEnv -->
+		<dependency>
+			<groupId>io.github.cdimascio</groupId>
+			<artifactId>java-dotenv</artifactId>
+			<version>5.1.4</version>
+		</dependency>
+		<!-- Discord4J -->
+		<dependency>
+			<groupId>com.discord4j</groupId>
+			<artifactId>discord4j-core</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<!-- Bucket4J -->
+		<dependency>
+			<groupId>com.github.vladimir-bukhtoyarov</groupId>
+			<artifactId>bucket4j-core</artifactId>
+			<version>4.10.0</version>
+		</dependency>
+		
+		<!-- Reactor Netty und Reactor Core Version überschreiben -->
+		<!-- Die Versionen werden zwingend von D4J gebraucht, aber R2DBC verwendet andere Versionen. R2DBC scheint jedoch auch mit den neuen Versionen zurechtzukommen. -->
+		<dependency>
+			<groupId>io.projectreactor.netty</groupId>
+			<artifactId>reactor-netty</artifactId>
+			<version>0.9.7.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+			<version>3.3.5.RELEASE</version>
+		</dependency>
+		
+		<!-- SLF4J -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<version>2.13.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>2.13.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>2.13.1</version>
+		</dependency>
+		<!-- R2DBC-PostgreSQL -->
+		<dependency>
+			<groupId>io.r2dbc</groupId>
+			<artifactId>r2dbc-postgresql</artifactId>
+			<version>0.8.2.RELEASE</version>
+		</dependency>
+		<!-- R2DBC-Pool -->
+		<dependency>
+			<groupId>io.r2dbc</groupId>
+			<artifactId>r2dbc-pool</artifactId>
+			<version>0.8.2.RELEASE</version>
+		</dependency>
+	</dependencies>
+	
+	<properties>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+	</properties>
+
+</project>

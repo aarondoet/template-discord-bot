@@ -1,0 +1,6 @@
+*.class
+*.jar
+*.txt
+target/
+.idea/
+.env
