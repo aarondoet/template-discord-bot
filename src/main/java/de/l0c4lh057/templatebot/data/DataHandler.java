@@ -122,13 +122,14 @@ public class DataHandler {
 	 * @param userId The ID of the user that should get put into the database.
 	 * @return An empty {@link Mono}
 	 */
-	public static Mono<Integer> initializeUser(Snowflake userId){
+	public static Mono<Void> initializeUser(Snowflake userId){
 		return getConnection().flatMap(con -> Mono.from(con.createStatement("INSERT INTO " + Tables.USERS.getName() + " (userId, prefix, language) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING")
 				.bind("$1", userId)
 				.bind("$2", DBUser.defaultUser.getPrefix())
 				.bind("$2", DBUser.defaultUser.getLanguage())
 				.execute())
 				.flatMap(result -> Mono.from(result.getRowsUpdated()))
+				.then()
 		);
 	}
 	

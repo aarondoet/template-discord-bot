@@ -573,7 +573,7 @@ public class Command {
 	}
 	
 	public enum Category {
-		GENERAL(1, "general")
+		GENERAL(1, "commandcategory.general")
 		;
 		private final int helpPage;
 		private final String nameKey;
@@ -582,7 +582,7 @@ public class Command {
 			this.nameKey = nameKey;
 		}
 		public int getHelpPage() { return helpPage; }
-		public String getName(String lang){ return BotUtils.getLanguageString(lang, "commandcategory." + nameKey); }
+		public String getName(String lang){ return BotUtils.getLanguageString(lang, nameKey); }
 		public static Category getCategoryByHelpPage(int helpPage){
 			Category[] categories = Category.values();
 			for (Category category : categories) {

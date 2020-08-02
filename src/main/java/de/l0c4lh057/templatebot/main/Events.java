@@ -45,59 +45,53 @@ public class Events {
 						.map(Guild::getId)
 						.flatMap(DataHandler::initializeGuild),
 				
-				/* Put all users in database when receiving first DM from them */
-				client.on(MessageCreateEvent.class)
-						.filter(event -> event.getGuildId().isEmpty())
-						.map(MessageCreateEvent::getMessage)
-						.map(Message::getAuthor)
-						.filter(Optional::isPresent)
-						.map(Optional::get)
-						.map(User::getId)
-						.flatMap(DataHandler::initializeUser),
-				
 				/* Command Handler */
 				client.on(MessageCreateEvent.class)
 						// ignore bots and webhooks
 						.filter(event -> !event.getMessage().getAuthor().map(User::isBot).orElse(true))
 						// add members to the member cache here instead of DiscordCache class to ensure that it is saved before command execution
 						.doOnNext(event -> event.getMember().ifPresent(DiscordCache::addMember))
-						.flatMap(event -> {
-							String content = event.getMessage().getContent();
-							Mono<String> prefixMono;
-							Mono<String> languageMono;
-							if(event.getGuildId().isPresent()){
-								// called in a guild
-								prefixMono = BotUtils.getGuildPrefix(event.getGuildId().get());
-								languageMono = BotUtils.getGuildLanguage(event.getGuildId().get());
-							}else{
-								// called in DMs
-								prefixMono = BotUtils.getUserPrefix(event.getMessage().getAuthor().map(User::getId).orElseThrow());
-								languageMono = BotUtils.getUserLanguage(event.getMessage().getAuthor().map(User::getId).orElseThrow());
-							}
-							return prefixMono.zipWith(languageMono)
-									.flatMap(TupleUtils.function((String prefix, String language) -> {
-										String strippedContent = null;
-										if(content.startsWith("<@" + selfId + ">")){
-											strippedContent = content.substring(3 + selfId.length());
-											if(strippedContent.startsWith(" ")) strippedContent = strippedContent.substring(1);
-										}else if(content.startsWith("<@!" + selfId + ">")){
-											strippedContent = content.substring(4 + selfId.length());
-											if(strippedContent.startsWith(" ")) strippedContent = strippedContent.substring(1);
-										}else if(content.startsWith(prefix)){
-											strippedContent = content.substring(prefix.length());
-										}
-										// message does not start with command prefix
-										if(strippedContent == null) return Mono.empty();
-										int spaceIndex = strippedContent.indexOf(' ');
-										if(spaceIndex == 0) return Mono.empty();
-										Command command = Commands.getCommand(spaceIndex > 0 ? strippedContent.substring(0, spaceIndex) : strippedContent);
-										// command does not exist
-										if(command == null) return Mono.empty();
-										
-										ArgumentList args = spaceIndex == -1 ? new ArgumentList() : ArgumentList.of(strippedContent.substring(spaceIndex + 1));
-										return command.execute(event, language, prefix, args);
-									}));
-						})
+						// put all users in database
+						.flatMap(event -> Mono.justOrEmpty(event.getMessage().getAuthor())
+								.flatMap(user -> DataHandler.initializeUser(user.getId()))
+								.then(Mono.fromCallable(() -> {
+									String content = event.getMessage().getContent();
+									Mono<String> prefixMono;
+									Mono<String> languageMono;
+									if(event.getGuildId().isPresent()){
+										// called in a guild
+										prefixMono = BotUtils.getGuildPrefix(event.getGuildId().get());
+										languageMono = BotUtils.getGuildLanguage(event.getGuildId().get());
+									}else{
+										// called in DMs
+										prefixMono = BotUtils.getUserPrefix(event.getMessage().getAuthor().map(User::getId).orElseThrow());
+										languageMono = BotUtils.getUserLanguage(event.getMessage().getAuthor().map(User::getId).orElseThrow());
+									}
+									return prefixMono.zipWith(languageMono)
+											.flatMap(TupleUtils.function((prefix, language) -> {
+												String strippedContent = null;
+												if(content.startsWith("<@" + selfId + ">")){
+													strippedContent = content.substring(3 + selfId.length());
+													if(strippedContent.startsWith(" ")) strippedContent = strippedContent.substring(1);
+												}else if(content.startsWith("<@!" + selfId + ">")){
+													strippedContent = content.substring(4 + selfId.length());
+													if(strippedContent.startsWith(" ")) strippedContent = strippedContent.substring(1);
+												}else if(content.startsWith(prefix)){
+													strippedContent = content.substring(prefix.length());
+												}
+												// message does not start with command prefix
+												if(strippedContent == null) return Mono.empty();
+												int spaceIndex = strippedContent.indexOf(' ');
+												if(spaceIndex == 0) return Mono.empty();
+												Command command = Commands.getCommand(spaceIndex > 0 ? strippedContent.substring(0, spaceIndex) : strippedContent);
+												// command does not exist
+												if(command == null) return Mono.empty();
+												
+												ArgumentList args = spaceIndex == -1 ? new ArgumentList() : ArgumentList.of(strippedContent.substring(spaceIndex + 1));
+												return command.execute(event, language, prefix, args);
+											}));
+								}))
+						)
 		);
 	}
 	
