@@ -51,45 +51,37 @@ public class Events {
 						.filter(event -> !event.getMessage().getAuthor().map(User::isBot).orElse(true))
 						// add members to the member cache here instead of DiscordCache class to ensure that it is saved before command execution
 						.doOnNext(event -> event.getMember().ifPresent(DiscordCache::addMember))
-						// put all users in database
 						.flatMap(event -> Mono.justOrEmpty(event.getMessage().getAuthor())
-								.flatMap(user -> DataHandler.initializeUser(user.getId()))
-								.then(Mono.fromCallable(() -> {
+								// put user in database if message came from DM
+								.flatMap(user -> event.getGuildId().map(gId -> Mono.empty().then()).orElse(DataHandler.initializeUser(user.getId())))
+								.then(
+										event.getGuildId().map(id -> BotUtils.getGuildPrefix(id).zipWith(BotUtils.getGuildLanguage(id)))
+												.orElseGet(() -> event.getMessage().getAuthor().map(User::getId).map(id -> BotUtils.getUserPrefix(id)
+														.zipWith(BotUtils.getUserLanguage(id))).orElseThrow()
+												)
+								)
+								.flatMap(TupleUtils.function((String prefix, String language) -> {
 									String content = event.getMessage().getContent();
-									Mono<String> prefixMono;
-									Mono<String> languageMono;
-									if(event.getGuildId().isPresent()){
-										// called in a guild
-										prefixMono = BotUtils.getGuildPrefix(event.getGuildId().get());
-										languageMono = BotUtils.getGuildLanguage(event.getGuildId().get());
-									}else{
-										// called in DMs
-										prefixMono = BotUtils.getUserPrefix(event.getMessage().getAuthor().map(User::getId).orElseThrow());
-										languageMono = BotUtils.getUserLanguage(event.getMessage().getAuthor().map(User::getId).orElseThrow());
+									String strippedContent = null;
+									if(content.startsWith("<@" + selfId + ">")){
+										strippedContent = content.substring(3 + selfId.length());
+										if(strippedContent.startsWith(" ")) strippedContent = strippedContent.substring(1);
+									}else if(content.startsWith("<@!" + selfId + ">")){
+										strippedContent = content.substring(4 + selfId.length());
+										if(strippedContent.startsWith(" ")) strippedContent = strippedContent.substring(1);
+									}else if(content.startsWith(prefix)){
+										strippedContent = content.substring(prefix.length());
 									}
-									return prefixMono.zipWith(languageMono)
-											.flatMap(TupleUtils.function((prefix, language) -> {
-												String strippedContent = null;
-												if(content.startsWith("<@" + selfId + ">")){
-													strippedContent = content.substring(3 + selfId.length());
-													if(strippedContent.startsWith(" ")) strippedContent = strippedContent.substring(1);
-												}else if(content.startsWith("<@!" + selfId + ">")){
-													strippedContent = content.substring(4 + selfId.length());
-													if(strippedContent.startsWith(" ")) strippedContent = strippedContent.substring(1);
-												}else if(content.startsWith(prefix)){
-													strippedContent = content.substring(prefix.length());
-												}
-												// message does not start with command prefix
-												if(strippedContent == null) return Mono.empty();
-												int spaceIndex = strippedContent.indexOf(' ');
-												if(spaceIndex == 0) return Mono.empty();
-												Command command = Commands.getCommand(spaceIndex > 0 ? strippedContent.substring(0, spaceIndex) : strippedContent);
-												// command does not exist
-												if(command == null) return Mono.empty();
-												
-												ArgumentList args = spaceIndex == -1 ? new ArgumentList() : ArgumentList.of(strippedContent.substring(spaceIndex + 1));
-												return command.execute(event, language, prefix, args);
-											}));
+									// message does not start with command prefix
+									if(strippedContent == null) return Mono.empty();
+									int spaceIndex = strippedContent.indexOf(' ');
+									if(spaceIndex == 0) return Mono.empty();
+									Command command = Commands.getCommand(spaceIndex > 0 ? strippedContent.substring(0, spaceIndex) : strippedContent);
+									// command does not exist
+									if(command == null) return Mono.empty();
+									
+									ArgumentList args = spaceIndex == -1 ? new ArgumentList() : ArgumentList.of(strippedContent.substring(spaceIndex + 1));
+									return command.execute(event, language, prefix, args);
 								}))
 						)
 		);

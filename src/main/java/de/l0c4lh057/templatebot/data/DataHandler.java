@@ -8,6 +8,7 @@ import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.Result;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Flux;
@@ -111,7 +112,7 @@ public class DataHandler {
 				.bind("$2", DBGuild.defaultGuild.getPrefix())
 				.bind("$3", DBGuild.defaultGuild.getLanguage())
 				.execute())
-				.flatMap(result -> Mono.from(result.getRowsUpdated()))
+				.flatMapMany(Result::getRowsUpdated)
 				.then()
 		);
 	}
@@ -124,11 +125,11 @@ public class DataHandler {
 	 */
 	public static Mono<Void> initializeUser(Snowflake userId){
 		return getConnection().flatMap(con -> Mono.from(con.createStatement("INSERT INTO " + Tables.USERS.getName() + " (userId, prefix, language) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING")
-				.bind("$1", userId)
+				.bind("$1", userId.asLong())
 				.bind("$2", DBUser.defaultUser.getPrefix())
-				.bind("$2", DBUser.defaultUser.getLanguage())
+				.bind("$3", DBUser.defaultUser.getLanguage())
 				.execute())
-				.flatMap(result -> Mono.from(result.getRowsUpdated()))
+				.flatMapMany(Result::getRowsUpdated)
 				.then()
 		);
 	}

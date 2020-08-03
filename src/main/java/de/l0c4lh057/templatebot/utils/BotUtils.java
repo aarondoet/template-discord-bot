@@ -48,7 +48,6 @@ public class BotUtils {
 		String prefix = guildPrefixes.get(guildId.asLong());
 		if(prefix != null) return Mono.just(prefix);
 		return DataHandler.getGuild(guildId)
-				.doOnNext(guild -> guildLanguages.put(guildId.asLong(), guild.getLanguage()))
 				.map(DBGuild::getPrefix)
 				.doOnNext(pref -> guildPrefixes.put(guildId.asLong(), pref));
 	}
@@ -57,15 +56,12 @@ public class BotUtils {
 		String language = guildLanguages.get(guildId.asLong());
 		if(language != null) return Mono.just(language);
 		return DataHandler.getGuild(guildId)
-				.doOnNext(guild -> guildPrefixes.put(guildId.asLong(), guild.getPrefix()))
 				.map(DBGuild::getLanguage)
 				.doOnNext(lang -> guildLanguages.put(guildId.asLong(), lang));
 	}
 	
 	private static final Map<Long, String> userPrefixes = new WeakHashMap<>();
 	public static Mono<String> getUserPrefix(Snowflake userId){
-		// TODO: actually return the value from the database
-		if(true) return Mono.just(DEFAULT_PREFIX);
 		String prefix = userPrefixes.get(userId.asLong());
 		if(prefix != null) return Mono.just(prefix);
 		return DataHandler.getUser(userId)
@@ -75,8 +71,6 @@ public class BotUtils {
 	}
 	private static final Map<Long, String> userLanguages = new WeakHashMap<>();
 	public static Mono<String> getUserLanguage(Snowflake userId){
-		// TODO: actually return the value from the database
-		if(true) return Mono.just("en");
 		String language = userLanguages.get(userId.asLong());
 		if(language != null) return Mono.just(language);
 		return DataHandler.getUser(userId)
