@@ -1,5 +1,6 @@
 package de.l0c4lh057.templatebot.commands;
 
+import de.l0c4lh057.templatebot.commands.exceptions.CommandException;
 import de.l0c4lh057.templatebot.commands.exceptions.InvalidArgumentException;
 import de.l0c4lh057.templatebot.main.BotMain;
 import de.l0c4lh057.templatebot.utils.BotUtils;
@@ -45,50 +46,50 @@ public class Commands {
 		Command.builder()
 				.setName("help")
 				.setRatelimit(RatelimitType.CHANNEL, Bandwidth.simple(3, Duration.ofSeconds(10)), Bandwidth.simple(7, Duration.ofHours(1)))
-				.setExecutor((event, language, prefix, args) -> event.getMessage().getChannel()
-						.flatMap(channel -> {
-							if(!args.isEmpty()){
-								Command command = Commands.getCommand(args.get(0));
-								if(command != null){
-									String commandName = command.getName();
-									List<String> commandTree = new ArrayList<>();
-									commandTree.add(command.getName());
-									for(int i = 1; i < args.size(); i++){
-										Command cmd = command.getSubCommand(args.get(i));
-										if(cmd == null) break;
-										commandTree.add(cmd.getName());
-										command = cmd;
-									}
-									return channel.createEmbed(ecs -> ecs
-											.setTitle(getLanguageString(language, "help.command.title", commandName))
-											.setDescription(getLanguageString(language, "help." + String.join(".", commandTree) + ".detailed", prefix))
-									);
+				.setExecutor((event, language, prefix, args) -> {
+						if(!args.isEmpty()){
+							Command command = Commands.getCommand(args.get(0));
+							if(command != null){
+								String commandName = command.getName();
+								List<String> commandTree = new ArrayList<>();
+								commandTree.add(command.getName());
+								for(int i = 1; i < args.size(); i++){
+									Command cmd = command.getSubCommand(args.get(i));
+									if(cmd == null) break;
+									commandTree.add(cmd.getName());
+									command = cmd;
 								}
+								return event.getMessage().getRestChannel().createMessage(EmbedData.builder()
+										.title(getLanguageString(language, "help.command.title", commandName))
+										.description(getLanguageString(language, "help." + String.join(".", commandTree) + ".detailed", prefix))
+										.build()
+								);
 							}
-							Command.Category category = BotUtils.getHelpPage(language, args);
-							AtomicInteger helpPage = new AtomicInteger(category.getHelpPage());
-							return channel.createEmbed(BotUtils.getHelpSpec(language, prefix, category))
-									.flatMap(message -> Mono.when(
-											message.addReaction(BotUtils.EMOJI_ARROW_LEFT).then(message.addReaction(BotUtils.EMOJI_ARROW_RIGHT)),
-											event.getClient().on(ReactionAddEvent.class)
-													.filter(ev -> ev.getMessageId().equals(message.getId()))
-													.filter(ev -> ev.getUserId().equals(event.getMessage().getAuthor().map(User::getId).orElseThrow()))
-													.filter(ev -> ev.getEmoji().equals(BotUtils.EMOJI_ARROW_LEFT) || ev.getEmoji().equals(BotUtils.EMOJI_ARROW_RIGHT))
-													.timeout(Duration.ofMinutes(2), message.removeAllReactions().then(Mono.empty()))
-													.flatMap(ev -> {
-														if(ev.getEmoji().equals(BotUtils.EMOJI_ARROW_LEFT)) helpPage.decrementAndGet();
-														else if(ev.getEmoji().equals(BotUtils.EMOJI_ARROW_RIGHT)) helpPage.decrementAndGet();
-														helpPage.set(BotUtils.clamp(1, helpPage.get(), Command.Category.values().length));
-														Command.Category newCategory = Command.Category.getCategoryByHelpPage(helpPage.get());
-														return Mono.when(
-																message.removeReaction(ev.getEmoji(), ev.getUserId()),
-																message.edit(mes -> mes.setEmbed(BotUtils.getHelpSpec(language, prefix, newCategory)))
-														);
-													})
-									)
-									);
-						})
-						.then()
+						}
+						Command.Category category = BotUtils.getHelpPage(language, args);
+						AtomicInteger helpPage = new AtomicInteger(category.getHelpPage());
+						// TODO switch from getChannel to getRestChannel
+						return event.getMessage().getChannel().flatMap(channel -> channel.createEmbed(BotUtils.getHelpSpec(language, prefix, category))
+								.flatMap(message -> Mono.when(
+										message.addReaction(BotUtils.EMOJI_ARROW_LEFT).then(message.addReaction(BotUtils.EMOJI_ARROW_RIGHT)),
+										event.getClient().on(ReactionAddEvent.class)
+												.filter(ev -> ev.getMessageId().equals(message.getId()))
+												.filter(ev -> ev.getUserId().equals(event.getMessage().getAuthor().map(User::getId).orElseThrow()))
+												.filter(ev -> ev.getEmoji().equals(BotUtils.EMOJI_ARROW_LEFT) || ev.getEmoji().equals(BotUtils.EMOJI_ARROW_RIGHT))
+												.timeout(Duration.ofMinutes(2), message.removeAllReactions().then(Mono.empty()))
+												.flatMap(ev -> {
+													if(ev.getEmoji().equals(BotUtils.EMOJI_ARROW_LEFT)) helpPage.decrementAndGet();
+													else if(ev.getEmoji().equals(BotUtils.EMOJI_ARROW_RIGHT)) helpPage.decrementAndGet();
+													helpPage.set(BotUtils.clamp(1, helpPage.get(), Command.Category.values().length));
+													Command.Category newCategory = Command.Category.getCategoryByHelpPage(helpPage.get());
+													return Mono.when(
+															message.removeReaction(ev.getEmoji(), ev.getUserId()),
+															message.edit(mes -> mes.setEmbed(BotUtils.getHelpSpec(language, prefix, newCategory)))
+													);
+												})
+								))
+						);
+					}
 				)
 				.build().register();
 		
@@ -98,12 +99,13 @@ public class Commands {
 				.addSubCommand(
 						Command.builder()
 								.setName("get")
-								.setExecutor((event, language, prefix, args) -> event.getMessage().getChannel()
-										.flatMap(channel -> channel.createEmbed(ecs -> ecs
-												.setTitle(getLanguageString(language, "command.prefix.get.title"))
-												.setDescription(getLanguageString(language, "command.prefix.get.description", prefix))
-												.setColor(BotUtils.COLOR_LIGHT_GREEN)
-										))
+								.setExecutor((event, language, prefix, args) -> event.getMessage().getRestChannel()
+										.createMessage(EmbedData.builder()
+												.title(getLanguageString(language, "command.prefix.get.title"))
+												.description(getLanguageString(language, "command.prefix.get.description", prefix))
+												.color(BotUtils.COLOR_LIGHT_GREEN.getRGB())
+												.build()
+										)
 								)
 								.build()
 				)
@@ -115,7 +117,7 @@ public class Commands {
 				)
 				.setUnknownSubCommandHandler(
 						Command.builder()
-								.setExecutor((event, language, prefix, args) -> Mono.error(new InvalidArgumentException(null))) // TODO
+								.setExecutor((event, language, prefix, args) -> Mono.error(CommandException.invalidArgument(null))) // TODO
 								.build()
 				)
 				.build().register();

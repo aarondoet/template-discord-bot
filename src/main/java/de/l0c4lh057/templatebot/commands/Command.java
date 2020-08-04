@@ -1,9 +1,6 @@
 package de.l0c4lh057.templatebot.commands;
 
-import de.l0c4lh057.templatebot.commands.exceptions.InvalidArgumentException;
-import de.l0c4lh057.templatebot.commands.exceptions.MissingPermissionsException;
-import de.l0c4lh057.templatebot.commands.exceptions.NotExecutableException;
-import de.l0c4lh057.templatebot.commands.exceptions.RatelimitedException;
+import de.l0c4lh057.templatebot.commands.exceptions.*;
 import de.l0c4lh057.templatebot.utils.BotUtils;
 import de.l0c4lh057.templatebot.utils.ratelimits.NoRatelimit;
 import de.l0c4lh057.templatebot.utils.ratelimits.Ratelimit;
@@ -13,6 +10,7 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
+import discord4j.discordjson.json.EmbedData;
 import discord4j.rest.util.PermissionSet;
 import io.github.bucket4j.Bandwidth;
 import org.apache.logging.log4j.LogManager;
@@ -162,13 +160,13 @@ public class Command {
 		Snowflake authorId = event.getMessage().getAuthor().map(User::getId).orElseThrow();
 		Mono<?> executionMono;
 		if(requiresBotOwner && !BotUtils.botOwners.contains(authorId)){
-			executionMono = Mono.error(new NotExecutableException(null));
+			executionMono = Mono.error(CommandException.notExecutable("exception.requiresbotowner"));
 		}else if(event.getGuildId().isPresent() && !usableInGuilds){
-			executionMono = Mono.error(new NotExecutableException(null));
+			executionMono = Mono.error(CommandException.notExecutable("exception.notexecutableinguilds"));
 		}else if(event.getGuildId().isEmpty() && !usableInDMs){
-			executionMono = Mono.error(new NotExecutableException(null));
+			executionMono = Mono.error(CommandException.notExecutable("exception.notexecutableindms"));
 		}else if(isRatelimited(event.getGuildId().orElse(null), event.getMessage().getChannelId(), authorId)){
-			executionMono = Mono.error(new RatelimitedException("exception.ratelimited.description"));
+			executionMono = Mono.error(CommandException.ratelimited("exception.ratelimited"));
 		}else{
 			executionMono = PermissionManager.checkExecutability(event.getGuildId().orElse(null), authorId, event.getMessage().getChannelId(), requiredPermissions, requiresGuildOwner, nsfw)
 					.then(executor.execute(event, language, prefix, args));
@@ -188,38 +186,51 @@ public class Command {
 	 */
 	private static Mono<Void> handleExceptions(Mono<?> executionMono, MessageCreateEvent event, String language, String commandName){
 		return executionMono.then()
-				.onErrorResume(MissingPermissionsException.class, err -> event.getMessage().getChannel()
-						.flatMap(channel -> channel.createEmbed(ecs -> ecs
-								.setTitle(getLanguageString(language, "exception.missingpermissions.title"))
-								.setDescription(err.getErrorMessage(language))
-								.setColor(BotUtils.COLOR_LIGHT_RED)
-						)).then()
+				.onErrorResume(MissingPermissionsException.class, err -> event.getMessage().getRestChannel()
+						.createMessage(EmbedData.builder()
+								.title(getLanguageString(language, "exception.missingpermissions.title"))
+								.description(err.getErrorMessage(language))
+								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
+								.build()
+						).then()
 						.onErrorResume(ex -> Mono.empty())
 				)
-				.onErrorResume(InvalidArgumentException.class, err -> event.getMessage().getChannel()
-						.flatMap(channel -> channel.createEmbed(ecs -> ecs
-								.setTitle(getLanguageString(language, "exception.invalidargument.title"))
-								.setDescription(err.getErrorMessage(language))
-								.setColor(BotUtils.COLOR_LIGHT_RED)
-						)).then()
+				.onErrorResume(InvalidArgumentException.class, err -> event.getMessage().getRestChannel()
+						.createMessage(EmbedData.builder()
+								.title(getLanguageString(language, "exception.invalidargument.title"))
+								.description(err.getErrorMessage(language))
+								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
+								.build()
+						).then()
 						.onErrorResume(ex -> Mono.empty())
 				)
-				.onErrorResume(RatelimitedException.class, err -> event.getMessage().getChannel()
-						.flatMap(channel -> channel.createEmbed(ecs -> ecs
-								.setTitle(getLanguageString(language, "exception.ratelimited.title"))
-								.setDescription(err.getErrorMessage(language))
-								.setColor(BotUtils.COLOR_LIGHT_RED)
-						)).then()
+				.onErrorResume(RatelimitedException.class, err -> event.getMessage().getRestChannel()
+						.createMessage(EmbedData.builder()
+								.title(getLanguageString(language, "exception.ratelimited.title"))
+								.description(err.getErrorMessage(language))
+								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
+								.build()
+						).then()
+						.onErrorResume(ex -> Mono.empty())
+				)
+				.onErrorResume(NotExecutableException.class, err -> event.getMessage().getRestChannel()
+						.createMessage(EmbedData.builder()
+								.title(getLanguageString(language, "exception.notexecutable.title"))
+								.description(err.getErrorMessage(language))
+								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
+								.build()
+						).then()
 						.onErrorResume(ex -> Mono.empty())
 				)
 				.onErrorResume(err -> {
 					logger.error("Unexpected exception when executing command " + commandName, err);
-					return event.getMessage().getChannel()
-							.flatMap(channel -> channel.createEmbed(ecs -> ecs
-									.setTitle(getLanguageString(language, "exception.unknown.title"))
-									.setDescription(getLanguageString(language, "exception.unknown.description"))
-									.setColor(BotUtils.COLOR_DARK_RED)
-							)).then()
+					return event.getMessage().getRestChannel()
+							.createMessage(EmbedData.builder()
+									.title(getLanguageString(language, "exception.unknown.title"))
+									.description(getLanguageString(language, "exception.unknown"))
+									.color(BotUtils.COLOR_DARK_RED.getRGB())
+									.build()
+							).then()
 							.onErrorResume(ex -> Mono.empty());
 				});
 	}

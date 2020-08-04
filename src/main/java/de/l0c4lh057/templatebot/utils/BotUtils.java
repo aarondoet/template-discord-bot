@@ -8,6 +8,8 @@ import de.l0c4lh057.templatebot.data.DataHandler;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.discordjson.json.EmbedData;
+import discord4j.discordjson.json.EmbedFooterData;
 import discord4j.rest.util.Color;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -151,6 +153,29 @@ public class BotUtils {
 				)
 				.setFooter(getLanguageString(language, "help.category.footer", category.getHelpPage(), Command.Category.values().length), null)
 				.setColor(BOT_COLOR);
+	}
+	
+	/**
+	 *
+	 * @param language
+	 * @param prefix
+	 * @param category
+	 * @return
+	 */
+	public static EmbedData getHelpEmbedData(String language, String prefix, Command.Category category){
+		return EmbedData.builder()
+				.title(getLanguageString(language, "help.category.title", category.getName(language)))
+				.description(Commands.getCommands(category)
+						.sorted(Comparator.comparing(Command::getName))
+						.sorted(Comparator.comparing(Command::getHelpPagePosition))
+						.map(command -> getLanguageString(language, "help." + command.getName() + ".short", prefix))
+						.collect(Collectors.joining("\n"))
+				)
+				.footer(EmbedFooterData.builder()
+						.text(getLanguageString(language, "help.category.footer", category.getHelpPage(), Command.Category.values().length))
+						.build()
+				)
+				.build();
 	}
 	
 	/**

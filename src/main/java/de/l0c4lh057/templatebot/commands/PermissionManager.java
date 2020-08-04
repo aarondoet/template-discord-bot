@@ -1,7 +1,6 @@
 package de.l0c4lh057.templatebot.commands;
 
-import de.l0c4lh057.templatebot.commands.exceptions.MissingPermissionsException;
-import de.l0c4lh057.templatebot.commands.exceptions.NotExecutableException;
+import de.l0c4lh057.templatebot.commands.exceptions.CommandException;
 import de.l0c4lh057.templatebot.data.DataHandler;
 import de.l0c4lh057.templatebot.data.DiscordCache;
 import discord4j.common.util.Snowflake;
@@ -34,7 +33,7 @@ public class PermissionManager {
 					List<Snowflake> roleWhitelist = lists.stream().filter(perms -> perms.size() > 0 && perms.get(0).isRole() && perms.get(0).isWhitelist()).findAny().orElseGet(Collections::emptyList).stream().map(CommandPermission::getTargetId).collect(Collectors.toList());
 					List<Snowflake> roleBlacklist = lists.stream().filter(perms -> perms.size() > 0 && perms.get(0).isRole() && perms.get(0).isBlacklist()).findAny().orElseGet(Collections::emptyList).stream().map(CommandPermission::getTargetId).collect(Collectors.toList());
 					boolean hasPerms = effectivePermissions.contains(Permission.ADMINISTRATOR);
-					if(onUserBlacklist) return Mono.error(new MissingPermissionsException(null));
+					if(onUserBlacklist) return Mono.error(CommandException.missingPermissions("exception.missingpermissions"));
 					boolean blacklisted = false;
 					if(!hasPerms && roleIds.stream().anyMatch(roleWhitelist::contains)) hasPerms = true;
 					if(hasPerms && roleIds.stream().anyMatch(roleBlacklist::contains)){
@@ -46,7 +45,7 @@ public class PermissionManager {
 						if(requiredPermissions.getDefaultPermissions().containsAll(effectivePermissions)) hasPerms = true;
 					}
 					if(hasPerms) return Mono.empty();
-					else return Mono.error(new MissingPermissionsException(null));
+					else return Mono.error(CommandException.missingPermissions("exception.missingpermissions"));
 				});
 	}
 	
@@ -64,12 +63,12 @@ public class PermissionManager {
 	                                            boolean requiresGuildOwner, boolean requiresNsfwChannel){
 		if(guildId == null) return Mono.empty();
 		return Mono.justOrEmpty(DiscordCache.getGuild(guildId).flatMap(guild -> guild.getMember(userId)))
-				.switchIfEmpty(Mono.error(() -> new MissingPermissionsException(null)))
+				.switchIfEmpty(Mono.error(CommandException.missingPermissions("exception.notcached")))
 				.flatMap(member -> {
 					if(member.getGuild().getOwnerId().equals(member.getId())) return Mono.empty();
-					else if(requiresGuildOwner) return Mono.error(() -> new MissingPermissionsException(null));
+					else if(requiresGuildOwner) return Mono.error(CommandException.missingPermissions("exception.requiresguildowner"));
 					else if(requiresNsfwChannel && !member.getGuild().getChannel(channelId).map(DiscordCache.MinimalChannel::isNsfw).orElse(false))
-						return Mono.error(new NotExecutableException(null));
+						return Mono.error(CommandException.notExecutable("exception.requiresnsfwchannel"));
 					else return checkExecutability(
 								guildId,
 								userId,
@@ -109,10 +108,10 @@ public class PermissionManager {
 																							@NonNull Command.Permission permission, boolean requiresGuildOwner){
 		if(guildId == null) return Mono.empty();
 		return Mono.justOrEmpty(DiscordCache.getGuild(guildId).flatMap(guild -> guild.getMember(userId)))
-				.switchIfEmpty(Mono.error(new MissingPermissionsException(null)))
+				.switchIfEmpty(Mono.error(CommandException.missingPermissions("exception.notcached")))
 				.flatMap(member -> {
 					if(member.getGuild().getOwnerId().equals(member.getId())) return Mono.empty();
-					else if(requiresGuildOwner) return Mono.error(new MissingPermissionsException(null));
+					else if(requiresGuildOwner) return Mono.error(CommandException.missingPermissions("exception.requiresguildowner"));
 					else return checkExecutability(
 								guildId,
 								userId,
