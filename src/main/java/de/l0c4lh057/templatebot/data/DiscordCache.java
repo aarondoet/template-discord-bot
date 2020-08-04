@@ -4,7 +4,6 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.channel.*;
 import discord4j.core.event.domain.guild.*;
-import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.role.RoleCreateEvent;
 import discord4j.core.event.domain.role.RoleDeleteEvent;
 import discord4j.core.event.domain.role.RoleUpdateEvent;
@@ -17,9 +16,9 @@ import discord4j.core.object.entity.channel.GuildChannel;
 import discord4j.core.object.entity.channel.TextChannel;
 import discord4j.core.util.PermissionUtil;
 import discord4j.rest.util.PermissionSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.NonNull;
+import reactor.util.annotation.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,7 +32,7 @@ public class DiscordCache {
 	 * @param client The {@link GatewayDiscordClient} on which the events should get registered on
 	 * @return An empty {@link Mono} containing all the event subscriptions
 	 */
-	public static Mono<Void> registerEvents(@NotNull GatewayDiscordClient client){
+	public static Mono<Void> registerEvents(@NonNull GatewayDiscordClient client){
 		return Mono.when(
 				client.on(TextChannelUpdateEvent.class).map(TextChannelUpdateEvent::getCurrent).doOnNext(DiscordCache::addChannel),
 				//client.on(VoiceChannelUpdateEvent.class).map(VoiceChannelUpdateEvent::getCurrent).doOnNext(DiscordCache::addChannel),

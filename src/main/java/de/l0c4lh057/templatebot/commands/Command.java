@@ -5,8 +5,6 @@ import de.l0c4lh057.templatebot.commands.exceptions.MissingPermissionsException;
 import de.l0c4lh057.templatebot.commands.exceptions.NotExecutableException;
 import de.l0c4lh057.templatebot.commands.exceptions.RatelimitedException;
 import de.l0c4lh057.templatebot.utils.BotUtils;
-import static de.l0c4lh057.templatebot.utils.BotUtils.getLanguageString;
-
 import de.l0c4lh057.templatebot.utils.ratelimits.NoRatelimit;
 import de.l0c4lh057.templatebot.utils.ratelimits.Ratelimit;
 import de.l0c4lh057.templatebot.utils.ratelimits.RatelimitFactory;
@@ -17,17 +15,15 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.rest.util.PermissionSet;
 import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Bucket4j;
-import io.github.bucket4j.local.LocalBucketBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.NonNull;
 import reactor.util.annotation.Nullable;
 
-import java.time.Duration;
 import java.util.*;
+
+import static de.l0c4lh057.templatebot.utils.BotUtils.getLanguageString;
 
 public class Command {
 	
@@ -120,7 +116,7 @@ public class Command {
 	 * @param userId    The {@link Snowflake} ID of the user who executed the command
 	 * @return Whether the guild/member/user/channel is rate limited
 	 */
-	public boolean isRatelimited(@Nullable Snowflake guildId, @NotNull Snowflake channelId, @NotNull Snowflake userId){
+	public boolean isRatelimited(@Nullable Snowflake guildId, @NonNull Snowflake channelId, @NonNull Snowflake userId){
 		return ratelimit.isRatelimited(guildId, channelId, userId);
 	}
 	
@@ -147,7 +143,7 @@ public class Command {
 	 * @param args     The list of all arguments passed to this command
 	 * @return An empty {@link Mono}.
 	 */
-	public Mono<Void> execute(@NotNull MessageCreateEvent event, @NotNull String language, @NotNull String prefix, @NotNull ArgumentList args){
+	public Mono<Void> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args){
 		return execute(event, language, prefix, args, true);
 	}
 	
@@ -278,7 +274,7 @@ public class Command {
 		 * @param aliases The list of aliases this command has
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
-		public CommandBuilder setName(@NotNull String name, @NotNull String... aliases){
+		public CommandBuilder setName(@NonNull String name, @NonNull String... aliases){
 			this.name = name;
 			this.aliases = aliases;
 			return this;
@@ -290,7 +286,7 @@ public class Command {
 		 * @param executor The action that should get performed when executing the command
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
-		public CommandBuilder setExecutor(@NotNull CommandExecutor executor){
+		public CommandBuilder setExecutor(@NonNull CommandExecutor executor){
 			this.executor = executor;
 			return this;
 		}
@@ -299,7 +295,7 @@ public class Command {
 		 * @param category The {@link Category} this command should be listed in
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
-		public CommandBuilder setCategory(@NotNull Category category){
+		public CommandBuilder setCategory(@NonNull Category category){
 			this.category = category;
 			return this;
 		}
@@ -376,7 +372,7 @@ public class Command {
 		 * @param defaultPermissions
 		 * @return
 		 */
-		public CommandBuilder setRequiredPermissions(@NotNull String permissionName, @NotNull discord4j.rest.util.Permission... defaultPermissions){
+		public CommandBuilder setRequiredPermissions(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
 			return setRequiredPermissions(new Permission(permissionName, defaultPermissions));
 		}
 		
@@ -430,7 +426,7 @@ public class Command {
 		 * @param aliases The list of aliases this command has
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
-		public CommandCollectionBuilder setName(@NotNull String name, @NotNull String... aliases){
+		public CommandCollectionBuilder setName(@NonNull String name, @NonNull String... aliases){
 			this.name = name;
 			this.aliases = aliases;
 			return this;
@@ -440,7 +436,7 @@ public class Command {
 		 * @param category The {@link Category} this command should be listed in
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
-		public CommandCollectionBuilder setCategory(@NotNull Command.Category category){
+		public CommandCollectionBuilder setCategory(@NonNull Command.Category category){
 			this.category = category;
 			return this;
 		}
@@ -487,7 +483,7 @@ public class Command {
 		 * @param defaultPermissions
 		 * @return
 		 */
-		public CommandCollectionBuilder setRequiredPermissions(@NotNull String permissionName, @NotNull discord4j.rest.util.Permission... defaultPermissions){
+		public CommandCollectionBuilder setRequiredPermissions(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
 			this.requiredPermissions = new Permission(permissionName, defaultPermissions);
 			return this;
 		}
@@ -502,7 +498,7 @@ public class Command {
 		 * @param command The sub command
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
-		public CommandCollectionBuilder addSubCommand(@NotNull Command command){
+		public CommandCollectionBuilder addSubCommand(@NonNull Command command){
 			if(subCommands.get(command.getName()) != null || Arrays.stream(command.getAliases()).anyMatch(alias -> subCommands.get(alias) != null)){
 				logger.warn("Sub command {} of command {} already got registered", command.getName(), name);
 			}else{
@@ -523,7 +519,7 @@ public class Command {
 		 * @param unknownSubCommandHandler The command that should get executed when no sub command matches
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
-		public CommandCollectionBuilder setUnknownSubCommandHandler(@NotNull Command unknownSubCommandHandler){
+		public CommandCollectionBuilder setUnknownSubCommandHandler(@NonNull Command unknownSubCommandHandler){
 			this.unknownSubCommandHandler = unknownSubCommandHandler;
 			return this;
 		}
@@ -569,7 +565,7 @@ public class Command {
 		 * @param args
 		 * @return
 		 */
-		Mono<?> execute(@NotNull MessageCreateEvent event, @NotNull String language, @NotNull String prefix, @NotNull ArgumentList args);
+		Mono<?> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args);
 	}
 	
 	public enum Category {
@@ -577,7 +573,7 @@ public class Command {
 		;
 		private final int helpPage;
 		private final String nameKey;
-		Category(int helpPage, @NotNull String nameKey){
+		Category(int helpPage, @NonNull String nameKey){
 			this.helpPage = helpPage;
 			this.nameKey = nameKey;
 		}
@@ -591,7 +587,7 @@ public class Command {
 			logger.warn("The requested category with helpPage {} does not exist", helpPage);
 			return null;
 		}
-		public static Category getCategoryByName(@NotNull String lang, @NotNull String name){
+		public static Category getCategoryByName(@NonNull String lang, @NonNull String name){
 			for (Category category : Category.values()) {
 				if (category.getName(lang).equalsIgnoreCase(name)) return category;
 			}

@@ -3,8 +3,8 @@ package de.l0c4lh057.templatebot.utils.ratelimits;
 import discord4j.common.util.Snowflake;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import reactor.util.annotation.NonNull;
+import reactor.util.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +17,7 @@ public class GuildRatelimit extends Ratelimit {
 		this.bandwidths = bandwidths;
 	}
 	@Override
-	public boolean isRatelimited(@Nullable Snowflake guildId, @NotNull Snowflake channelId, @NotNull Snowflake userId) {
+	public boolean isRatelimited(@Nullable Snowflake guildId, @NonNull Snowflake channelId, @NonNull Snowflake userId) {
 		if(guildId == null) return isRatelimited(noGuildBuckets, userId);
 		return isRatelimited(buckets, guildId);
 	}

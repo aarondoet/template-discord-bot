@@ -11,15 +11,12 @@ import discord4j.core.event.domain.guild.GuildCreateEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Guild;
-import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
-
-import java.util.Optional;
+import reactor.util.annotation.NonNull;
 
 public class Events {
 	
@@ -31,7 +28,7 @@ public class Events {
 	 * @param client The {@link GatewayDiscordClient} on which the events should get registered on
 	 * @return An empty {@link Mono} containing all the event subscriptions
 	 */
-	public static Mono<Void> registerEvents(@NotNull GatewayDiscordClient client){
+	public static Mono<Void> registerEvents(@NonNull GatewayDiscordClient client){
 		logger.info("Registering all events");
 		final String selfId = client.getSelfId().asString();
 		return Mono.when(

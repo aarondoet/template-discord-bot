@@ -1,6 +1,6 @@
 package de.l0c4lh057.templatebot.commands;
 
-import org.jetbrains.annotations.NotNull;
+import reactor.util.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,7 +10,7 @@ public class ArgumentList extends ArrayList<String> {
 	private int index = 0;
 	private int filteredSize = -1;
 	
-	private static boolean isEmptyArgument(@NotNull String argument){
+	private static boolean isEmptyArgument(@NonNull String argument){
 		return argument.length() == 0 || (argument.length() == 1 && !(Character.isWhitespace(argument.charAt(0)) && argument.equals(" ")));
 	}
 	
@@ -18,11 +18,11 @@ public class ArgumentList extends ArrayList<String> {
 		super();
 	}
 	
-	public ArgumentList(@NotNull Collection<String> c){
+	public ArgumentList(@NonNull Collection<String> c){
 		super(c);
 	}
 	
-	public static ArgumentList of(@NotNull String content){
+	public static ArgumentList of(@NonNull String content){
 		ArgumentList args = new ArgumentList();
 		if(content.length() == 0) return args;
 		boolean escaped = false;
@@ -152,7 +152,7 @@ public class ArgumentList extends ArrayList<String> {
 	 * @param toIndex   high endpoint (exclusive) of the subList
 	 * @return a copy of the specified range of the list
 	 */
-	@NotNull
+	@NonNull
 	@Override
 	public ArgumentList subList(int fromIndex, int toIndex) {
 		return new ArgumentList(super.subList(fromIndex, toIndex));

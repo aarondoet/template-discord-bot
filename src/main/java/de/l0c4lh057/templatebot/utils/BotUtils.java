@@ -5,14 +5,14 @@ import de.l0c4lh057.templatebot.commands.Commands;
 import de.l0c4lh057.templatebot.data.DBGuild;
 import de.l0c4lh057.templatebot.data.DBUser;
 import de.l0c4lh057.templatebot.data.DataHandler;
+import discord4j.common.util.Snowflake;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
-import discord4j.common.util.Snowflake;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.NonNull;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -44,7 +44,7 @@ public class BotUtils {
 	public static final ReactionEmoji EMOJI_CHECKMARK = ReactionEmoji.unicode("\u2705");
 	
 	private static final Map<Long, String> guildPrefixes = new WeakHashMap<>();
-	public static Mono<String> getGuildPrefix(@NotNull Snowflake guildId){
+	public static Mono<String> getGuildPrefix(@NonNull Snowflake guildId){
 		String prefix = guildPrefixes.get(guildId.asLong());
 		if(prefix != null) return Mono.just(prefix);
 		return DataHandler.getGuild(guildId)

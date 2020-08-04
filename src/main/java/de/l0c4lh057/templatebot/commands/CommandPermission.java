@@ -4,7 +4,7 @@ import discord4j.rest.util.Permission;
 
 public class CommandPermission {
 	
-	private CommandPermission(){
+	private CommandPermission(CommandPermissionBuilder builder){
 	
 	}
 	
@@ -21,13 +21,18 @@ public class CommandPermission {
 		
 		private CommandPermissionBuilder(){}
 		
-		private CommandPermissionBuilder setUsableByEveryone(boolean usableByEveryone){
+		/**
+		 *
+		 * @param usableByEveryone
+		 * @return
+		 */
+		public CommandPermissionBuilder setUsableByEveryone(boolean usableByEveryone){
 			this.usableByEveryone = usableByEveryone;
 			return this;
 		}
 		
 		public CommandPermission build(){
-			return new CommandPermission();
+			return new CommandPermission(this);
 		}
 	}
 	

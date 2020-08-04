@@ -5,8 +5,8 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
 import io.github.bucket4j.local.LocalBucketBuilder;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import reactor.util.annotation.NonNull;
+import reactor.util.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,11 +19,11 @@ public abstract class Ratelimit {
 		bandwidths.forEach(builder::addLimit);
 		return builder.build();
 	}
-	public abstract boolean isRatelimited(@Nullable Snowflake guildId, @NotNull Snowflake channelId, @NotNull Snowflake userId);
-	protected boolean isRatelimited(@NotNull Map<Long, Bucket> buckets, @NotNull Snowflake id){
+	public abstract boolean isRatelimited(@Nullable Snowflake guildId, @NonNull Snowflake channelId, @NonNull Snowflake userId);
+	protected boolean isRatelimited(@NonNull Map<Long, Bucket> buckets, @NonNull Snowflake id){
 		return !buckets.computeIfAbsent(id.asLong(), k -> newBucket()).tryConsume(1);
 	}
-	protected boolean isRatelimited(@NotNull Map<Long, Map<Long, Bucket>> buckets, @NotNull Snowflake id1, @NotNull Snowflake id2){
+	protected boolean isRatelimited(@NonNull Map<Long, Map<Long, Bucket>> buckets, @NonNull Snowflake id1, @NonNull Snowflake id2){
 		return isRatelimited(buckets.computeIfAbsent(id1.asLong(), k -> new HashMap<>()), id2);
 	}
 }

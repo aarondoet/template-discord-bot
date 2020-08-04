@@ -3,8 +3,6 @@ package de.l0c4lh057.templatebot.commands;
 import de.l0c4lh057.templatebot.commands.exceptions.InvalidArgumentException;
 import de.l0c4lh057.templatebot.main.BotMain;
 import de.l0c4lh057.templatebot.utils.BotUtils;
-import static de.l0c4lh057.templatebot.utils.BotUtils.getLanguageString;
-
 import de.l0c4lh057.templatebot.utils.ratelimits.RatelimitType;
 import discord4j.common.GitProperties;
 import discord4j.core.event.domain.message.ReactionAddEvent;
@@ -14,14 +12,19 @@ import discord4j.discordjson.json.EmbedFieldData;
 import io.github.bucket4j.Bandwidth;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.NonNull;
+import reactor.util.annotation.Nullable;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+
+import static de.l0c4lh057.templatebot.utils.BotUtils.getLanguageString;
 
 public class Commands {
 	
@@ -57,8 +60,8 @@ public class Commands {
 										command = cmd;
 									}
 									return channel.createEmbed(ecs -> ecs
-											.setTitle(BotUtils.getLanguageString(language, "help.command.title", commandName))
-											.setDescription(BotUtils.getLanguageString(language, "help." + String.join(".", commandTree) + ".detailed", prefix))
+											.setTitle(getLanguageString(language, "help.command.title", commandName))
+											.setDescription(getLanguageString(language, "help." + String.join(".", commandTree) + ".detailed", prefix))
 									);
 								}
 							}
@@ -122,17 +125,17 @@ public class Commands {
 				.setUsableInDMs(true)
 				.setCategory(Command.Category.GENERAL)
 				.setExecutor((event, language, prefix, args) -> event.getMessage().getRestChannel().createMessage(EmbedData.builder()
-						.title(BotUtils.getLanguageString(language, "command.info.title"))
-						.description(BotUtils.getLanguageString(language, "command.info.general"))
+						.title(getLanguageString(language, "command.info.title"))
+						.description(getLanguageString(language, "command.info.general"))
 						.addField(EmbedFieldData.builder()
-								.name(BotUtils.getLanguageString(language, "command.info.version.title"))
-								.value(BotUtils.getLanguageString(language, "command.info.version.description", BotMain.CURRENT_VERSION))
+								.name(getLanguageString(language, "command.info.version.title"))
+								.value(getLanguageString(language, "command.info.version.description", BotMain.CURRENT_VERSION))
 								.inline(false)
 								.build()
 						)
 						.addField(EmbedFieldData.builder()
-								.name(BotUtils.getLanguageString(language, "command.info.libraries.title"))
-								.value(BotUtils.getLanguageString(language, "command.info.libraries.description",
+								.name(getLanguageString(language, "command.info.libraries.title"))
+								.value(getLanguageString(language, "command.info.libraries.description",
 										System.getProperty("java.version"),
 										GitProperties.getProperties().getProperty(GitProperties.APPLICATION_VERSION))
 								)
@@ -150,7 +153,7 @@ public class Commands {
 	 * @param name
 	 * @return
 	 */
-	@Nullable public static Command getCommand(@NotNull String name){
+	@Nullable public static Command getCommand(@NonNull String name){
 		return commands.get(name.toLowerCase());
 	}
 	
@@ -168,7 +171,7 @@ public class Commands {
 	 * @param category
 	 * @return
 	 */
-	public static Stream<Command> getCommands(@NotNull Command.Category category){
+	public static Stream<Command> getCommands(@NonNull Command.Category category){
 		return commands.values().stream()
 				.filter(cmd -> cmd.getCategory() == category)
 				.distinct();
