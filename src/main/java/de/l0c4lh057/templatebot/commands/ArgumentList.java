@@ -7,6 +7,8 @@ import java.util.Collection;
 
 public class ArgumentList extends ArrayList<String> {
 	
+	private final static ArgumentList empty = new ArgumentList();
+	
 	private int index = 0;
 	private int filteredSize = -1;
 	
@@ -14,14 +16,22 @@ public class ArgumentList extends ArrayList<String> {
 		return argument.length() == 0 || (argument.length() == 1 && !(Character.isWhitespace(argument.charAt(0)) && argument.equals(" ")));
 	}
 	
-	public ArgumentList(){
+	private ArgumentList(){
 		super();
 	}
 	
-	public ArgumentList(@NonNull Collection<String> c){
+	private ArgumentList(@NonNull Collection<String> c){
 		super(c);
 	}
 	
+	public static ArgumentList empty(){ return empty; }
+	
+	/**
+	 *
+	 * @param content
+	 * @return
+	 */
+	@NonNull
 	public static ArgumentList of(@NonNull String content){
 		ArgumentList args = new ArgumentList();
 		if(content.length() == 0) return args;
@@ -74,10 +84,19 @@ public class ArgumentList extends ArrayList<String> {
 		return args;
 	}
 	
+	/**
+	 *
+	 * @return
+	 */
 	public boolean hasNext(){
 		return hasNext(true);
 	}
 	
+	/**
+	 *
+	 * @param skipEmpty
+	 * @return
+	 */
 	public boolean hasNext(boolean skipEmpty){
 		if(!skipEmpty) return index < size();
 		int j = index;
@@ -87,14 +106,32 @@ public class ArgumentList extends ArrayList<String> {
 		return j < size();
 	}
 	
+	/**
+	 *
+	 * @return
+	 */
+	@NonNull
 	public String getNext(){
 		return getNext(true, true);
 	}
 	
+	/**
+	 *
+	 * @param increment
+	 * @return
+	 */
+	@NonNull
 	public String getNext(boolean increment){
 		return getNext(true, increment);
 	}
 	
+	/**
+	 *
+	 * @param skipEmpty
+	 * @param increment
+	 * @return
+	 */
+	@NonNull
 	public String getNext(boolean skipEmpty, boolean increment){
 		if(!skipEmpty) return get(increment ? index++ : index);
 		int j = index;
@@ -105,10 +142,20 @@ public class ArgumentList extends ArrayList<String> {
 		return get(increment ? index++ : index);
 	}
 	
+	/**
+	 *
+	 * @return
+	 */
+	@NonNull
 	public String getCurrent(){
 		return get(index - 1);
 	}
 	
+	/**
+	 *
+	 * @return
+	 */
+	@NonNull
 	public String getRemaining(){
 		StringBuilder sb = new StringBuilder();
 		for(int i = index; i < size(); i++){
@@ -127,16 +174,28 @@ public class ArgumentList extends ArrayList<String> {
 		return sb.toString();
 	}
 	
+	/**
+	 *
+	 * @return
+	 */
 	public int getFilteredSize(){
 		if(filteredSize != -1) return filteredSize;
 		filteredSize = (int)stream().filter(arg -> !isEmptyArgument(arg)).count();
 		return filteredSize;
 	}
 	
+	/**
+	 *
+	 * @return
+	 */
 	public int getCurrentIndex(){
 		return index;
 	}
 	
+	/**
+	 *
+	 * @param index
+	 */
 	public void setCurrentIndex(int index){
 		this.index = index;
 	}

@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.NonNull;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -45,6 +46,7 @@ public class DataHandler {
 	 *
 	 * @return A database connection
 	 */
+	@NonNull
 	private static Mono<Connection> getConnection(){
 		return pool.create();
 	}
@@ -55,10 +57,13 @@ public class DataHandler {
 		PERMISSIONS("permissions")
 		;
 		private final String name;
-		Tables(String name){
+		Tables(@NonNull String name){
 			this.name = name;
 		}
-		public String getName() { return name; }
+		/**
+		 * @return
+		 */
+		@NonNull public String getName() { return name; }
 	}
 	
 	/**
@@ -66,6 +71,7 @@ public class DataHandler {
 	 *
 	 * @return An empty {@link Mono}
 	 */
+	@NonNull
 	public static Mono<Void> initialize(){
 		String createGuildsTable = "CREATE TABLE IF NOT EXISTS " + Tables.GUILDS.getName() + " (" +
 				"guildId BIGINT," +
@@ -106,7 +112,8 @@ public class DataHandler {
 	 * @param guildId The ID of the guild that should get put into the database
 	 * @return An empty {@link Mono}
 	 */
-	public static Mono<Void> initializeGuild(Snowflake guildId){
+	@NonNull
+	public static Mono<Void> initializeGuild(@NonNull Snowflake guildId){
 		return getConnection().flatMap(con -> Mono.from(con.createStatement("INSERT INTO " + Tables.GUILDS.getName() + " (guildId, prefix, language) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING")
 				.bind("$1", guildId.asLong())
 				.bind("$2", DBGuild.defaultGuild.getPrefix())
@@ -123,7 +130,8 @@ public class DataHandler {
 	 * @param userId The ID of the user that should get put into the database.
 	 * @return An empty {@link Mono}
 	 */
-	public static Mono<Void> initializeUser(Snowflake userId){
+	@NonNull
+	public static Mono<Void> initializeUser(@NonNull Snowflake userId){
 		return getConnection().flatMap(con -> Mono.from(con.createStatement("INSERT INTO " + Tables.USERS.getName() + " (userId, prefix, language) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING")
 				.bind("$1", userId.asLong())
 				.bind("$2", DBUser.defaultUser.getPrefix())
@@ -140,7 +148,8 @@ public class DataHandler {
 	 * @param guildId The ID of the guild to get the data from
 	 * @return A {@link Mono} emitting the {@link DBGuild} upon completion
 	 */
-	public static Mono<DBGuild> getGuild(Snowflake guildId){
+	@NonNull
+	public static Mono<DBGuild> getGuild(@NonNull Snowflake guildId){
 		return getConnection().flatMap(con -> Mono.from(con.createStatement("SELECT * FROM " + Tables.GUILDS.getName() + " WHERE guildId=$1 LIMIT 1")
 				.bind("$1", guildId.asLong())
 				.execute())
@@ -154,7 +163,8 @@ public class DataHandler {
 	 * @param userId The ID of the user to get the data from
 	 * @return A {@link Mono} emitting the {@link DBUser} upon completion
 	 */
-	public static Mono<DBUser> getUser(Snowflake userId){
+	@NonNull
+	public static Mono<DBUser> getUser(@NonNull Snowflake userId){
 		return getConnection().flatMap(con -> Mono.from(con.createStatement("SELECT * FROM " + Tables.USERS.getName() + " WHERE userId=$1 LIMIT 1")
 				.bind("$1", userId.asLong())
 				.execute())
@@ -169,7 +179,8 @@ public class DataHandler {
 	 * @param guildId  The ID of the guild you want to get the data of
 	 * @return A {@link Flux} emitting all entries for the permission inside the guild upon success
 	 */
-	public static Flux<PermissionManager.CommandPermission> getPermissions(String permName, Snowflake guildId){
+	@NonNull
+	public static Flux<PermissionManager.CommandPermission> getPermissions(@NonNull String permName, @NonNull Snowflake guildId){
 		return getConnection().flatMapMany(con -> Flux.from(con.createStatement("SELECT * FROM " + Tables.PERMISSIONS.getName() + " WHERE permissionName=$1 AND guildId=$2")
 				.bind("$1", permName)
 				.bind("$2", guildId.asLong())

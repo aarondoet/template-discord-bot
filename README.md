@@ -3,16 +3,18 @@ This is a template bot written in Java using Discord4J. It can be used as a star
 without the need to create a command handler and implement features like permission checking every time you start a new one.
 
 ## What this template takes care of
+
 * Command Handling
-  * Aliases
-  * Permissions
-  * Ratelimits
-  * Sub commands (sub sub commands, sub sub sub commands, ...)
-  * User friendly exceptions
+    * Aliases
+    * Permissions
+    * Ratelimits
+    * Sub commands (sub sub commands, sub sub sub commands, ...)
+    * User friendly exceptions
 * Help page system (Including sub commands)
 * Localization (You still need to add all the languages)
 
 ## Requirements
+
 * PostgreSQL database
 
 ## Values to change
@@ -21,6 +23,7 @@ All class paths will be relative to the main path which is `de.l0c4lh057.templat
 
 * Refactor the default package name from `de.l0c4lh057.templatebot` to whatever you want it to be.
 * Grep for `templatebot` and change it in every occurrence.
+* Change `utils.BotUtils#botOwner` to a list of IDs of the people who should be considered bot owner.
 * Change `utils.BotUtils#DEFAULT_PREFIX` to your desired default prefix.
 * Change `utils.BotUtils#BOT_COLOR` to a color you like. This color will be used as embed color in commands that don't indicate success/failure with color.
 * Set required credentials like the bot token in `main.Credentials`.

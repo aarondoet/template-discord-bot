@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.NonNull;
+import reactor.util.annotation.Nullable;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -46,7 +47,7 @@ public class BotUtils {
 	public static final ReactionEmoji EMOJI_CHECKMARK = ReactionEmoji.unicode("\u2705");
 	
 	private static final Map<Long, String> guildPrefixes = new WeakHashMap<>();
-	public static Mono<String> getGuildPrefix(@NonNull Snowflake guildId){
+	@NonNull public static Mono<String> getGuildPrefix(@NonNull Snowflake guildId){
 		String prefix = guildPrefixes.get(guildId.asLong());
 		if(prefix != null) return Mono.just(prefix);
 		return DataHandler.getGuild(guildId)
@@ -54,7 +55,7 @@ public class BotUtils {
 				.doOnNext(pref -> guildPrefixes.put(guildId.asLong(), pref));
 	}
 	private static final Map<Long, String> guildLanguages = new WeakHashMap<>();
-	public static Mono<String> getGuildLanguage(Snowflake guildId){
+	@NonNull public static Mono<String> getGuildLanguage(@NonNull Snowflake guildId){
 		String language = guildLanguages.get(guildId.asLong());
 		if(language != null) return Mono.just(language);
 		return DataHandler.getGuild(guildId)
@@ -63,7 +64,7 @@ public class BotUtils {
 	}
 	
 	private static final Map<Long, String> userPrefixes = new WeakHashMap<>();
-	public static Mono<String> getUserPrefix(Snowflake userId){
+	@NonNull public static Mono<String> getUserPrefix(@NonNull Snowflake userId){
 		String prefix = userPrefixes.get(userId.asLong());
 		if(prefix != null) return Mono.just(prefix);
 		return DataHandler.getUser(userId)
@@ -72,7 +73,7 @@ public class BotUtils {
 				.doOnNext(pref -> userPrefixes.put(userId.asLong(), pref));
 	}
 	private static final Map<Long, String> userLanguages = new WeakHashMap<>();
-	public static Mono<String> getUserLanguage(Snowflake userId){
+	@NonNull public static Mono<String> getUserLanguage(@NonNull Snowflake userId){
 		String language = userLanguages.get(userId.asLong());
 		if(language != null) return Mono.just(language);
 		return DataHandler.getUser(userId)
@@ -86,7 +87,8 @@ public class BotUtils {
 	 * @param text
 	 * @return
 	 */
-	public static String escapeRegex(String text){
+	@NonNull
+	public static String escapeRegex(@NonNull String text){
 		return text.replaceAll("[\\<\\(\\[\\{\\\\\\^\\-\\=\\$\\!\\|\\]\\}\\)\\?\\*\\+\\.\\>]", "\\\\$0");
 	}
 	
@@ -96,7 +98,8 @@ public class BotUtils {
 	 * @param replace
 	 * @return
 	 */
-	public static String replaceAll(String template, Map<String, String> replace){
+	@NonNull
+	public static String replaceAll(@NonNull String template, @NonNull Map<String, String> replace){
 		Matcher matcher = Pattern.compile("(" + replace.keySet().stream().map(BotUtils::escapeRegex).collect(Collectors.joining("|")) + ")").matcher(template);
 		StringBuffer sb = new StringBuffer();
 		while(matcher.find()) matcher.appendReplacement(sb, replace.get(matcher.group(1)));
@@ -113,7 +116,8 @@ public class BotUtils {
 	 * @param <T>   The comparable type of the parameters
 	 * @return {@code min} if {@code value} is smaller than it, {@code max} if {@code value} is greater than it, otherwise {@code value}.
 	 */
-	public static <T extends Comparable<T>> T clamp(T min, T value, T max){
+	@NonNull
+	public static <T extends Comparable<T>> T clamp(@NonNull T min, @NonNull T value, @NonNull T max){
 		return min.compareTo(value) > 0 ? min : max.compareTo(value) < 0 ? max : value;
 	}
 	
@@ -123,15 +127,16 @@ public class BotUtils {
 	 * @param args
 	 * @return
 	 */
-	public static Command.Category getHelpPage(String lang, List<String> args){
-		if(args.size() == 0) return Command.Category.getCategoryByHelpPage(1);
+	@NonNull
+	public static Command.Category getHelpPage(@NonNull String lang, @NonNull List<String> args){
+		if(args.size() == 0) return Objects.requireNonNull(Command.Category.getCategoryByHelpPage(1));
 		try {
 			int page = BotUtils.clamp(1, Integer.parseInt(args.get(0)), Command.Category.values().length);
-			return Command.Category.getCategoryByHelpPage(page);
+			return Objects.requireNonNull(Command.Category.getCategoryByHelpPage(page));
 		} catch (NumberFormatException ignored){}
 		Command.Category category = Command.Category.getCategoryByName(lang, String.join(" ", args));
 		if(category != null) return category;
-		else return Command.Category.getCategoryByHelpPage(1);
+		else return Objects.requireNonNull(Command.Category.getCategoryByHelpPage(1));
 	}
 	
 	/**
@@ -141,7 +146,8 @@ public class BotUtils {
 	 * @param category
 	 * @return
 	 */
-	public static Consumer<EmbedCreateSpec> getHelpSpec(String language, String prefix, Command.Category category){
+	@NonNull
+	public static Consumer<EmbedCreateSpec> getHelpSpec(@NonNull String language, @NonNull String prefix, @NonNull Command.Category category){
 		return ecs -> ecs
 				.setTitle(getLanguageString(language, "help.category.title", category.getName(language)))
 				.setDescription(
@@ -162,7 +168,8 @@ public class BotUtils {
 	 * @param category
 	 * @return
 	 */
-	public static EmbedData getHelpEmbedData(String language, String prefix, Command.Category category){
+	@NonNull
+	public static EmbedData getHelpEmbedData(@NonNull String language, @NonNull String prefix, @NonNull Command.Category category){
 		return EmbedData.builder()
 				.title(getLanguageString(language, "help.category.title", category.getName(language)))
 				.description(Commands.getCommands(category)
@@ -219,7 +226,8 @@ public class BotUtils {
 	 * @param args
 	 * @return
 	 */
-	public static String getLanguageString(String language, String key, Object... args){
+	@NonNull
+	public static String getLanguageString(@NonNull String language, @NonNull String key, @NonNull Object... args){
 		if(args.length == 0) return bundles.get(language).getString(key);
 		else return new MessageFormat(bundles.get(language).getString(key), Locale.forLanguageTag(language)).format(args);
 	}

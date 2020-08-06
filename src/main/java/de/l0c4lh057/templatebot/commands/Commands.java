@@ -1,7 +1,6 @@
 package de.l0c4lh057.templatebot.commands;
 
 import de.l0c4lh057.templatebot.commands.exceptions.CommandException;
-import de.l0c4lh057.templatebot.commands.exceptions.InvalidArgumentException;
 import de.l0c4lh057.templatebot.main.BotMain;
 import de.l0c4lh057.templatebot.utils.BotUtils;
 import de.l0c4lh057.templatebot.utils.ratelimits.RatelimitType;
@@ -29,12 +28,14 @@ import static de.l0c4lh057.templatebot.utils.BotUtils.getLanguageString;
 
 public class Commands {
 	
+	private Commands(){}
+	
 	private static final Logger logger = LogManager.getLogger("Commands");
 	
 	/**
 	 * The {@link Map} in which all {@link Command}s are stored. Every alias maps to the command.
 	 */
-	protected static final Map<String, Command> commands = new HashMap<>();
+	static final Map<String, Command> commands = new HashMap<>();
 	
 	/**
 	 * All commands should get registered in here. If any command is registered in another class (e.g. a music bot class
@@ -155,7 +156,8 @@ public class Commands {
 	 * @param name
 	 * @return
 	 */
-	@Nullable public static Command getCommand(@NonNull String name){
+	@Nullable
+	public static Command getCommand(@NonNull String name){
 		return commands.get(name.toLowerCase());
 	}
 	
@@ -163,6 +165,7 @@ public class Commands {
 	 *
 	 * @return
 	 */
+	@NonNull
 	public static Stream<Command> getCommands(){
 		return commands.values().stream()
 				.distinct();
@@ -173,6 +176,7 @@ public class Commands {
 	 * @param category
 	 * @return
 	 */
+	@NonNull
 	public static Stream<Command> getCommands(@NonNull Command.Category category){
 		return commands.values().stream()
 				.filter(cmd -> cmd.getCategory() == category)

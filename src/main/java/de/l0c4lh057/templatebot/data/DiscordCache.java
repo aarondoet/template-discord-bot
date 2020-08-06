@@ -32,6 +32,7 @@ public class DiscordCache {
 	 * @param client The {@link GatewayDiscordClient} on which the events should get registered on
 	 * @return An empty {@link Mono} containing all the event subscriptions
 	 */
+	@NonNull
 	public static Mono<Void> registerEvents(@NonNull GatewayDiscordClient client){
 		return Mono.when(
 				client.on(TextChannelUpdateEvent.class).map(TextChannelUpdateEvent::getCurrent).doOnNext(DiscordCache::addChannel),
@@ -72,35 +73,36 @@ public class DiscordCache {
 	 * @param guildId The ID of the guild you want to get
 	 * @return An empty {@link Optional} if the guild is not cached, otherwise an {@link Optional} containing the {@link MinimalGuild}
 	 */
-	public static Optional<MinimalGuild> getGuild(Snowflake guildId){
+	@NonNull
+	public static Optional<MinimalGuild> getGuild(@NonNull Snowflake guildId){
 		return Optional.ofNullable(guilds.get(guildId.asLong()));
 	}
 	
-	private static void addChannel(GuildChannel channel){
+	private static void addChannel(@NonNull GuildChannel channel){
 		getGuild(channel.getGuildId()).ifPresent(guild -> guild.addChannel(new MinimalChannel(channel.getId(), channel.getPermissionOverwrites(), channel instanceof TextChannel && ((TextChannel)channel).isNsfw())));
 	}
-	private static void removeChannel(GuildChannel channel){
+	private static void removeChannel(@NonNull GuildChannel channel){
 		getGuild(channel.getGuildId()).ifPresent(guild -> guild.removeChannel(channel.getId()));
 	}
-	public static void addMember(Member member){
+	public static void addMember(@NonNull Member member){
 		addMember(member.getGuildId(), member.getId(), member.getRoleIds());
 	}
-	private static void addMember(Snowflake guildId, Snowflake userId, Set<Snowflake> roleIds){
+	private static void addMember(@NonNull Snowflake guildId, @NonNull Snowflake userId, @NonNull Set<Snowflake> roleIds){
 		getGuild(guildId).ifPresent(guild -> guild.addMember(new MinimalMember(userId, roleIds)));
 	}
-	private static void removeMember(Snowflake guildId, Snowflake userId){
+	private static void removeMember(@NonNull Snowflake guildId, @NonNull Snowflake userId){
 		getGuild(guildId).ifPresent(guild -> guild.removeMember(userId));
 	}
-	private static void addRole(Role role){
+	private static void addRole(@NonNull Role role){
 		getGuild(role.getGuildId()).ifPresent(guild -> guild.addRole(new MinimalRole(role.getRawPosition(), role.getGuildId(), role.getId(), role.getPermissions())));
 	}
-	private static void removeRole(Snowflake guildId, Snowflake roleId){
+	private static void removeRole(@NonNull Snowflake guildId, @NonNull Snowflake roleId){
 		getGuild(guildId).ifPresent(guild -> guild.removeRole(roleId));
 	}
-	private static void removeGuild(Snowflake guildId){
+	private static void removeGuild(@NonNull Snowflake guildId){
 		guilds.remove(guildId.asLong());
 	}
-	private static Mono<Void> addGuild(Guild guild){
+	@NonNull private static Mono<Void> addGuild(@NonNull Guild guild){
 		MinimalGuild minimalGuild = new MinimalGuild(
 				guild.getId(),
 				guild.getOwnerId(),
@@ -119,7 +121,7 @@ public class DiscordCache {
 		private final Snowflake guildId;
 		private final Snowflake id;
 		private final PermissionSet permissions;
-		private MinimalRole(int position, Snowflake guildId, Snowflake id, PermissionSet permissions){
+		private MinimalRole(int position, @NonNull Snowflake guildId, @NonNull Snowflake id, @NonNull PermissionSet permissions){
 			this.position = position;
 			this.guildId = guildId;
 			this.id = id;
@@ -134,17 +136,17 @@ public class DiscordCache {
 		 *
 		 * @return
 		 */
-		public Snowflake getGuildId(){ return guildId; }
+		@NonNull public Snowflake getGuildId(){ return guildId; }
 		/**
 		 *
 		 * @return
 		 */
-		public Snowflake getId(){ return id; }
+		@NonNull public Snowflake getId(){ return id; }
 		/**
 		 *
 		 * @return
 		 */
-		public PermissionSet getPermissions(){ return permissions; }
+		@NonNull public PermissionSet getPermissions(){ return permissions; }
 	}
 	
 	public static class MinimalGuild {
@@ -153,7 +155,7 @@ public class DiscordCache {
 		private final Map<Long, MinimalRole> roles;
 		private final Map<Long, MinimalChannel> channels;
 		private final Map<Long, MinimalMember> members;
-		private MinimalGuild(Snowflake id, Snowflake ownerId, @Nullable Map<Long, MinimalRole> roles,
+		private MinimalGuild(@NonNull Snowflake id, @NonNull Snowflake ownerId, @Nullable Map<Long, MinimalRole> roles,
 												 @Nullable Map<Long, MinimalChannel> channels, @Nullable Map<Long, MinimalMember> members){
 			this.id = id;
 			this.ownerId = ownerId;
@@ -166,17 +168,17 @@ public class DiscordCache {
 		 *
 		 * @return
 		 */
-		public Snowflake getId(){ return id; }
+		@NonNull public Snowflake getId(){ return id; }
 		/**
 		 *
 		 * @return
 		 */
-		public Snowflake getOwnerId(){ return ownerId; }
+		@NonNull public Snowflake getOwnerId(){ return ownerId; }
 		/**
 		 *
 		 * @return
 		 */
-		public Stream<MinimalRole> getRoles(){
+		@NonNull public Stream<MinimalRole> getRoles(){
 			return roles.values().stream()
 					.sorted(Comparator.comparing(MinimalRole::getRawPosition).thenComparing(MinimalRole::getId));
 		}
@@ -185,7 +187,7 @@ public class DiscordCache {
 		 * @param channelId
 		 * @return
 		 */
-		public Optional<MinimalChannel> getChannel(Snowflake channelId){
+		@NonNull public Optional<MinimalChannel> getChannel(@NonNull Snowflake channelId){
 			return Optional.ofNullable(channels.get(channelId.asLong()));
 		}
 		/**
@@ -193,7 +195,7 @@ public class DiscordCache {
 		 * @param memberId
 		 * @return
 		 */
-		public Optional<MinimalMember> getMember(Snowflake memberId){
+		@NonNull public Optional<MinimalMember> getMember(@NonNull Snowflake memberId){
 			return Optional.ofNullable(members.get(memberId.asLong()));
 		}
 		/**
@@ -201,26 +203,26 @@ public class DiscordCache {
 		 * @param roleId
 		 * @return
 		 */
-		public Optional<MinimalRole> getRole(Snowflake roleId){
+		@NonNull public Optional<MinimalRole> getRole(@NonNull Snowflake roleId){
 			return Optional.ofNullable(roles.get(roleId.asLong()));
 		}
-		private void addMember(MinimalMember member){
+		private void addMember(@NonNull MinimalMember member){
 			member.guild = this;
 			members.put(member.getId().asLong(), member);
 		}
-		private void addRole(MinimalRole role){
+		private void addRole(@NonNull MinimalRole role){
 			roles.put(role.getId().asLong(), role);
 		}
-		private void addChannel(MinimalChannel channel){
+		private void addChannel(@NonNull MinimalChannel channel){
 			channels.put(channel.getId().asLong(), channel);
 		}
-		private void removeMember(Snowflake userId){
+		private void removeMember(@NonNull Snowflake userId){
 			members.remove(userId.asLong());
 		}
-		private void removeRole(Snowflake roleId){
+		private void removeRole(@NonNull Snowflake roleId){
 			roles.remove(roleId.asLong());
 		}
-		private void removeChannel(Snowflake channelId){
+		private void removeChannel(@NonNull Snowflake channelId){
 			channels.remove(channelId.asLong());
 		}
 	}
@@ -229,7 +231,7 @@ public class DiscordCache {
 		private final Snowflake id;
 		private final Set<ExtendedPermissionOverwrite> permissionOverwrites;
 		private final boolean nsfw;
-		private MinimalChannel(Snowflake id, Set<ExtendedPermissionOverwrite> permissionOverwrites, boolean nsfw){
+		private MinimalChannel(@NonNull Snowflake id, @NonNull Set<ExtendedPermissionOverwrite> permissionOverwrites, boolean nsfw){
 			this.id = id;
 			this.permissionOverwrites = permissionOverwrites;
 			this.nsfw = nsfw;
@@ -238,12 +240,12 @@ public class DiscordCache {
 		 *
 		 * @return
 		 */
-		public Snowflake getId(){ return id; }
+		@NonNull public Snowflake getId(){ return id; }
 		/**
 		 *
 		 * @return
 		 */
-		public Set<ExtendedPermissionOverwrite> getPermissionOverwrites(){ return permissionOverwrites; }
+		@NonNull public Set<ExtendedPermissionOverwrite> getPermissionOverwrites(){ return permissionOverwrites; }
 		/**
 		 *
 		 * @return
@@ -255,18 +257,26 @@ public class DiscordCache {
 		private MinimalGuild guild;
 		private final Snowflake id;
 		private final Set<Snowflake> roleIds;
-		private MinimalMember(Snowflake id, Set<Snowflake> roleIds){
+		private MinimalMember(@NonNull Snowflake id, @NonNull Set<Snowflake> roleIds){
 			this.guild = null;
 			this.id = id;
 			this.roleIds = roleIds;
 		}
-		public MinimalGuild getGuild(){ return guild; }
-		public Snowflake getId(){ return id; }
 		/**
 		 *
 		 * @return
 		 */
-		public Stream<MinimalRole> getRoles(){
+		@NonNull public MinimalGuild getGuild(){ return guild; }
+		/**
+		 *
+		 * @return
+		 */
+		@NonNull public Snowflake getId(){ return id; }
+		/**
+		 *
+		 * @return
+		 */
+		@NonNull public Stream<MinimalRole> getRoles(){
 			return guild.getRoles()
 					.filter(role -> role.getId().equals(role.getGuildId()) || roleIds.contains(role.getId()));
 		}
@@ -274,7 +284,7 @@ public class DiscordCache {
 		 *
 		 * @return
 		 */
-		public PermissionSet getBasePermissions(){
+		@NonNull public PermissionSet getBasePermissions(){
 			if(guild.getOwnerId().equals(id)) return PermissionSet.all();
 			return PermissionUtil.computeBasePermissions(PermissionSet.none(), getRoles().map(MinimalRole::getPermissions).collect(Collectors.toList()));
 		}
@@ -283,7 +293,7 @@ public class DiscordCache {
 		 * @param channelId
 		 * @return
 		 */
-		public PermissionSet getEffectivePermissions(Snowflake channelId){
+		@NonNull public PermissionSet getEffectivePermissions(@NonNull Snowflake channelId){
 			if(guild.getOwnerId().equals(id)) return PermissionSet.all();
 			PermissionSet basePermissions = getBasePermissions();
 			List<Snowflake> sortedRoleIds = getRoles().map(MinimalRole::getId).collect(Collectors.toList());

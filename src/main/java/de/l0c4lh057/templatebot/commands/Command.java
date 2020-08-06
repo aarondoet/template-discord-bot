@@ -27,25 +27,40 @@ public class Command {
 	
 	private static final Logger logger = LogManager.getLogger("Command");
 	
-	private final String name;
-	private final String[] aliases;
-	private final Category category;
-	private final CommandExecutor executor;
+	@NonNull private final String name;
+	@NonNull private final String[] aliases;
+	@NonNull private final Category category;
+	@NonNull private final CommandExecutor executor;
 	private final boolean usableInGuilds;
 	private final boolean usableInDMs;
-	private final Map<String, Command> subCommands;
+	@NonNull private final Map<String, Command> subCommands;
 	private final int helpPagePosition;
 	private final boolean nsfw;
-	private final Ratelimit ratelimit;
+	@NonNull private final Ratelimit ratelimit;
 	private final boolean requiresBotOwner;
 	private final boolean requiresGuildOwner;
-	private final Permission requiredPermissions;
+	@Nullable private final Permission requiredPermissions;
 	
 	private Command(CommandBuilder builder){
 		this.name = builder.name;
 		this.aliases = builder.aliases;
 		this.category = builder.category;
 		this.executor = builder.executor;
+		this.usableInGuilds = builder.usableInGuilds;
+		this.usableInDMs = builder.usableInDMs;
+		this.subCommands = Collections.emptyMap();
+		this.helpPagePosition = builder.helpPagePosition;
+		this.nsfw = builder.nsfw;
+		this.ratelimit = builder.ratelimit;
+		this.requiresBotOwner = builder.requiresBotOwner;
+		this.requiresGuildOwner = builder.requiresGuildOwner;
+		this.requiredPermissions = builder.requiredPermissions;
+	}
+	
+	private Command(CommandCollectionBuilder builder){
+		this.name = builder.name;
+		this.aliases = builder.aliases;
+		this.category = builder.category;
 		this.usableInGuilds = builder.usableInGuilds;
 		this.usableInDMs = builder.usableInDMs;
 		this.subCommands = builder.subCommands;
@@ -55,27 +70,37 @@ public class Command {
 		this.requiresBotOwner = builder.requiresBotOwner;
 		this.requiresGuildOwner = builder.requiresGuildOwner;
 		this.requiredPermissions = builder.requiredPermissions;
+		Command unknownSubCommandHandler = builder.unknownSubCommandHandler;
+		this.executor = (event, language, prefix, args) -> {
+			if(!args.isEmpty()){
+				Command command = subCommands.get(args.get(0).toLowerCase());
+				if(command != null){
+					return command.execute(event, language, prefix, args.subList(1, args.size()), false);
+				}
+			}
+			return unknownSubCommandHandler.execute(event, language, prefix, args, false);
+		};
 	}
 	
 	/**
 	 * @return The name of the command
 	 */
-	public String getName(){ return name; }
+	@NonNull public String getName(){ return name; }
 	
 	/**
 	 * @return All the aliases of the command
 	 */
-	public String[] getAliases(){ return aliases; }
+	@NonNull public String[] getAliases(){ return aliases; }
 	
 	/**
 	 * @return The {@link Category} the command is in
 	 */
-	public Category getCategory(){ return category; }
+	@NonNull public Category getCategory(){ return category; }
 	
 	/**
 	 * @return The {@link CommandExecutor} of this command
 	 */
-	public CommandExecutor getExecutor(){ return executor; }
+	@NonNull public CommandExecutor getExecutor(){ return executor; }
 	
 	/**
 	 * @return Whether the command can be executed in guilds
@@ -91,7 +116,7 @@ public class Command {
 	 * @param subCommand The name of the sub command
 	 * @return The {@link Command} with the passed value as name or alias or null if it does not exist
 	 */
-	public Command getSubCommand(String subCommand){ return subCommands.get(subCommand.toLowerCase()); }
+	@Nullable public Command getSubCommand(@NonNull String subCommand){ return subCommands.get(subCommand.toLowerCase()); }
 	
 	/**
 	 * @return The position of the command on the help page
@@ -141,7 +166,7 @@ public class Command {
 	 * @param args     The list of all arguments passed to this command
 	 * @return An empty {@link Mono}.
 	 */
-	public Mono<Void> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args){
+	@NonNull public Mono<Void> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args){
 		return execute(event, language, prefix, args, true);
 	}
 	
@@ -156,7 +181,7 @@ public class Command {
 	 * @return An empty {@link Mono}. It will contain an error if command execution failed and {@code handleExceptions}
 	 * is set to false.
 	 */
-	private Mono<Void> execute(MessageCreateEvent event, String language, String prefix, ArgumentList args, boolean handleExceptions){
+	@NonNull private Mono<Void> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args, boolean handleExceptions){
 		Snowflake authorId = event.getMessage().getAuthor().map(User::getId).orElseThrow();
 		Mono<?> executionMono;
 		if(requiresBotOwner && !BotUtils.botOwners.contains(authorId)){
@@ -184,7 +209,7 @@ public class Command {
 	 * @param commandName   The name of the command
 	 * @return An empty {@link Mono}
 	 */
-	private static Mono<Void> handleExceptions(Mono<?> executionMono, MessageCreateEvent event, String language, String commandName){
+	@NonNull private static Mono<Void> handleExceptions(@NonNull Mono<?> executionMono, @NonNull MessageCreateEvent event, @NonNull String language, @NonNull String commandName){
 		return executionMono.then()
 				.onErrorResume(MissingPermissionsException.class, err -> event.getMessage().getRestChannel()
 						.createMessage(EmbedData.builder()
@@ -238,6 +263,7 @@ public class Command {
 	/**
 	 * @return A new {@link CommandBuilder} instance
 	 */
+	@NonNull
 	public static CommandBuilder builder(){
 		return new CommandBuilder();
 	}
@@ -249,12 +275,13 @@ public class Command {
 	 *
 	 * @return A new {@link CommandCollectionBuilder} instance
 	 */
+	@NonNull
 	public static CommandCollectionBuilder collectionBuilder(){
 		return new CommandCollectionBuilder();
 	}
 	
 	@Override
-	public boolean equals(Object o){
+	public boolean equals(@Nullable Object o){
 		return (o instanceof Command) && ((Command)o).name.equals(name);
 	}
 	
@@ -270,7 +297,6 @@ public class Command {
 		private Category category = Category.GENERAL;
 		private boolean usableInGuilds = true;
 		private boolean usableInDMs = false;
-		private Map<String, Command> subCommands = Collections.emptyMap();
 		private int helpPagePosition = 0;
 		private boolean nsfw = false;
 		private Ratelimit ratelimit = NoRatelimit.getInstance();
@@ -285,6 +311,7 @@ public class Command {
 		 * @param aliases The list of aliases this command has
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandBuilder setName(@NonNull String name, @NonNull String... aliases){
 			this.name = name;
 			this.aliases = aliases;
@@ -297,6 +324,7 @@ public class Command {
 		 * @param executor The action that should get performed when executing the command
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandBuilder setExecutor(@NonNull CommandExecutor executor){
 			this.executor = executor;
 			return this;
@@ -306,17 +334,9 @@ public class Command {
 		 * @param category The {@link Category} this command should be listed in
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandBuilder setCategory(@NonNull Category category){
 			this.category = category;
-			return this;
-		}
-		
-		/**
-		 * @param subCommands A map of command names and aliases to the respective sub commands
-		 * @return This {@link CommandBuilder} instance to allow chaining
-		 */
-		private CommandBuilder setSubCommands(Map<String, Command> subCommands){
-			this.subCommands = subCommands;
 			return this;
 		}
 		
@@ -328,6 +348,7 @@ public class Command {
 		 * @param helpPagePosition The position of this command on the help page
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandBuilder setHelpPagePosition(int helpPagePosition){
 			this.helpPagePosition = helpPagePosition;
 			return this;
@@ -337,6 +358,7 @@ public class Command {
 		 * @param nsfw Whether this command should only be executable in NSFW channels and DMs
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandBuilder setNsfw(boolean nsfw){
 			this.nsfw = nsfw;
 			return this;
@@ -346,6 +368,7 @@ public class Command {
 		 * @param usableInDMs Whether this command can be executed in DMs
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandBuilder setUsableInDMs(boolean usableInDMs){
 			this.usableInDMs = usableInDMs;
 			return this;
@@ -355,6 +378,7 @@ public class Command {
 		 * @param usableInGuilds Whether this command can be executed in guilds
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandBuilder setUsableInGuilds(boolean usableInGuilds){
 			this.usableInGuilds = usableInGuilds;
 			return this;
@@ -364,6 +388,7 @@ public class Command {
 		 * @param requiresBotOwner
 		 * @return
 		 */
+		@NonNull
 		public CommandBuilder setRequiresBotOwner(boolean requiresBotOwner){
 			this.requiresBotOwner = requiresBotOwner;
 			return this;
@@ -373,6 +398,7 @@ public class Command {
 		 * @param requiresGuildOwner
 		 * @return
 		 */
+		@NonNull
 		public CommandBuilder setRequiresGuildOwner(boolean requiresGuildOwner){
 			this.requiresGuildOwner = requiresGuildOwner;
 			return this;
@@ -383,12 +409,9 @@ public class Command {
 		 * @param defaultPermissions
 		 * @return
 		 */
+		@NonNull
 		public CommandBuilder setRequiredPermissions(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
-			return setRequiredPermissions(new Permission(permissionName, defaultPermissions));
-		}
-		
-		private CommandBuilder setRequiredPermissions(Permission permissions){
-			this.requiredPermissions = permissions;
+			this.requiredPermissions = new Permission(permissionName, defaultPermissions);
 			return this;
 		}
 		
@@ -398,12 +421,14 @@ public class Command {
 		 * @param bandwidths
 		 * @return
 		 */
-		public CommandBuilder setRatelimit(RatelimitType type, Bandwidth... bandwidths){
+		@NonNull
+		public CommandBuilder setRatelimit(@NonNull RatelimitType type, @NonNull Bandwidth... bandwidths){
 			this.ratelimit = RatelimitFactory.getRatelimit(type, List.of(bandwidths));
 			return this;
 		}
 		
-		private CommandBuilder setRatelimit(Ratelimit ratelimit){
+		@NonNull
+		private CommandBuilder setRatelimit(@NonNull Ratelimit ratelimit){
 			this.ratelimit = ratelimit;
 			return this;
 		}
@@ -413,6 +438,7 @@ public class Command {
 		 *
 		 * @return The built {@link Command}
 		 */
+		@NonNull
 		public Command build(){
 			return new Command(this);
 		}
@@ -424,11 +450,14 @@ public class Command {
 		private final Map<String, Command> subCommands = new HashMap<>();
 		private Command unknownSubCommandHandler = null;
 		private Command.Category category = Category.GENERAL;
+		private boolean usableInGuilds = true;
+		private boolean usableInDMs = false;
 		private int helpPagePosition = 0;
+		private boolean nsfw = false;
 		private final Ratelimit ratelimit = NoRatelimit.getInstance();
 		private boolean requiresBotOwner = false;
 		private boolean requiresGuildOwner = false;
-		private Permission requiredPermissions = new Permission("");
+		private Permission requiredPermissions = null;
 		
 		private CommandCollectionBuilder(){}
 		
@@ -437,6 +466,7 @@ public class Command {
 		 * @param aliases The list of aliases this command has
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandCollectionBuilder setName(@NonNull String name, @NonNull String... aliases){
 			this.name = name;
 			this.aliases = aliases;
@@ -447,6 +477,7 @@ public class Command {
 		 * @param category The {@link Category} this command should be listed in
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandCollectionBuilder setCategory(@NonNull Command.Category category){
 			this.category = category;
 			return this;
@@ -460,8 +491,39 @@ public class Command {
 		 * @param helpPagePosition The position of this command on the help page
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandCollectionBuilder setHelpPagePosition(int helpPagePosition){
 			this.helpPagePosition = helpPagePosition;
+			return this;
+		}
+		
+		/**
+		 * @param nsfw Whether this command should only be executable in NSFW channels and DMs
+		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
+		 */
+		@NonNull
+		public CommandCollectionBuilder setNsfw(boolean nsfw){
+			this.nsfw = nsfw;
+			return this;
+		}
+		
+		/**
+		 * @param usableInDMs Whether this command can be executed in DMs
+		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
+		 */
+		@NonNull
+		public CommandCollectionBuilder setUsableInDMs(boolean usableInDMs){
+			this.usableInDMs = usableInDMs;
+			return this;
+		}
+		
+		/**
+		 * @param usableInGuilds Whether this command can be executed in guilds
+		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
+		 */
+		@NonNull
+		public CommandCollectionBuilder setUsableInGuilds(boolean usableInGuilds){
+			this.usableInGuilds = usableInGuilds;
 			return this;
 		}
 		
@@ -472,6 +534,7 @@ public class Command {
 		 * @param requiresBotOwner Whether only bot owners should be able to execuute the command
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandCollectionBuilder setRequiresBotOwner(boolean requiresBotOwner){
 			this.requiresBotOwner = requiresBotOwner;
 			return this;
@@ -483,6 +546,7 @@ public class Command {
 		 * @param requiresGuildOwner Whether only guild owners should be able to execute this command
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandCollectionBuilder setRequiresGuildOwner(boolean requiresGuildOwner){
 			this.requiresGuildOwner = requiresGuildOwner;
 			return this;
@@ -494,6 +558,7 @@ public class Command {
 		 * @param defaultPermissions
 		 * @return
 		 */
+		@NonNull
 		public CommandCollectionBuilder setRequiredPermissions(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
 			this.requiredPermissions = new Permission(permissionName, defaultPermissions);
 			return this;
@@ -509,6 +574,7 @@ public class Command {
 		 * @param command The sub command
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandCollectionBuilder addSubCommand(@NonNull Command command){
 			if(subCommands.get(command.getName()) != null || Arrays.stream(command.getAliases()).anyMatch(alias -> subCommands.get(alias) != null)){
 				logger.warn("Sub command {} of command {} already got registered", command.getName(), name);
@@ -530,6 +596,7 @@ public class Command {
 		 * @param unknownSubCommandHandler The command that should get executed when no sub command matches
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
+		@NonNull
 		public CommandCollectionBuilder setUnknownSubCommandHandler(@NonNull Command unknownSubCommandHandler){
 			this.unknownSubCommandHandler = unknownSubCommandHandler;
 			return this;
@@ -540,30 +607,13 @@ public class Command {
 		 *
 		 * @return The built {@link Command}
 		 */
+		@NonNull
 		public Command build(){
 			if(unknownSubCommandHandler == null){
 				logger.warn("No unknown subcommand handler set for command collection {}", name);
 				unknownSubCommandHandler = builder().setExecutor((event, language, prefix, args) -> Mono.empty()).build();
 			}
-			return builder()
-					.setName(name, aliases)
-					.setCategory(category)
-					.setSubCommands(subCommands)
-					.setHelpPagePosition(helpPagePosition)
-					.setRatelimit(ratelimit)
-					.setRequiresBotOwner(requiresBotOwner)
-					.setRequiresGuildOwner(requiresGuildOwner)
-					.setRequiredPermissions(requiredPermissions)
-					.setExecutor((event, language, prefix, args) -> {
-						if(!args.isEmpty()){
-							Command command = subCommands.get(args.get(0).toLowerCase());
-							if(command != null){
-								return command.execute(event, language, prefix, args.subList(1, args.size()), false);
-							}
-						}
-						return unknownSubCommandHandler.execute(event, language, prefix, args, false);
-					})
-					.build();
+			return new Command(this);
 		}
 	}
 	
@@ -576,6 +626,7 @@ public class Command {
 		 * @param args
 		 * @return
 		 */
+		@NonNull
 		Mono<?> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args);
 	}
 	
@@ -588,8 +639,24 @@ public class Command {
 			this.helpPage = helpPage;
 			this.nameKey = nameKey;
 		}
+		/**
+		 *
+		 * @return
+		 */
 		public int getHelpPage() { return helpPage; }
-		public String getName(String lang){ return BotUtils.getLanguageString(lang, nameKey); }
+		/**
+		 *
+		 * @param lang
+		 * @return
+		 */
+		@NonNull
+		public String getName(@NonNull String lang){ return BotUtils.getLanguageString(lang, nameKey); }
+		/**
+		 *
+		 * @param helpPage
+		 * @return
+		 */
+		@Nullable
 		public static Category getCategoryByHelpPage(int helpPage){
 			Category[] categories = Category.values();
 			for (Category category : categories) {
@@ -598,6 +665,13 @@ public class Command {
 			logger.warn("The requested category with helpPage {} does not exist", helpPage);
 			return null;
 		}
+		/**
+		 *
+		 * @param lang
+		 * @param name
+		 * @return
+		 */
+		@Nullable
 		public static Category getCategoryByName(@NonNull String lang, @NonNull String name){
 			for (Category category : Category.values()) {
 				if (category.getName(lang).equalsIgnoreCase(name)) return category;
@@ -609,12 +683,18 @@ public class Command {
 	public static class Permission {
 		private final String permissionName;
 		private final PermissionSet defaultPermissions;
-		private Permission(String permissionName, discord4j.rest.util.Permission... defaultPermissions){
+		private Permission(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
 			this.permissionName = permissionName;
 			this.defaultPermissions = PermissionSet.of(defaultPermissions);
 		}
-		public String getPermissionName(){ return permissionName; }
-		public PermissionSet getDefaultPermissions(){ return defaultPermissions; }
+		/**
+		 * @return
+		 */
+		@NonNull public String getPermissionName(){ return permissionName; }
+		/**
+		 * @return
+		 */
+		@NonNull public PermissionSet getDefaultPermissions(){ return defaultPermissions; }
 	}
 	
 }

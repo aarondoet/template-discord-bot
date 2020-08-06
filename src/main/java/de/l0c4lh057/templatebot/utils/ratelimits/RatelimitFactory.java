@@ -6,6 +6,13 @@ import reactor.util.annotation.NonNull;
 import java.util.List;
 
 public class RatelimitFactory {
+	/**
+	 *
+	 * @param ratelimitType
+	 * @param bandwidths
+	 * @return
+	 */
+	@NonNull
 	public static Ratelimit getRatelimit(@NonNull RatelimitType ratelimitType, @NonNull List<Bandwidth> bandwidths){
 		if(ratelimitType == RatelimitType.GUILD) return new GuildRatelimit(bandwidths);
 		else if(ratelimitType == RatelimitType.CHANNEL) return new ChannelRatelimit(bandwidths);

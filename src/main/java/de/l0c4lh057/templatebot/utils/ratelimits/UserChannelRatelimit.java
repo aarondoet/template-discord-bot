@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class UserChannelRatelimit extends Ratelimit {
 	private final Map<Long, Map<Long, Bucket>> buckets = new HashMap<>();
-	UserChannelRatelimit(List<Bandwidth> bandwidths){
+	UserChannelRatelimit(@NonNull List<Bandwidth> bandwidths){
 		this.bandwidths = bandwidths;
 	}
 	@Override

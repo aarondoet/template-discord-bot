@@ -22,6 +22,7 @@ public class CommandException extends Exception {
 	 * @param language
 	 * @return
 	 */
+	@NonNull
 	public String getErrorMessage(@NonNull String language){
 		return BotUtils.getLanguageString(language, key, args);
 	}
@@ -32,6 +33,7 @@ public class CommandException extends Exception {
 	 * @param args
 	 * @return
 	 */
+	@NonNull
 	public static InvalidArgumentException invalidArgument(@NonNull String key, @NonNull Object... args){
 		return new InvalidArgumentException(key, args);
 	}
@@ -42,6 +44,7 @@ public class CommandException extends Exception {
 	 * @param args
 	 * @return
 	 */
+	@NonNull
 	public static MissingPermissionsException missingPermissions(@NonNull String key, @NonNull Object... args){
 		return new MissingPermissionsException(key, args);
 	}
@@ -52,6 +55,7 @@ public class CommandException extends Exception {
 	 * @param args
 	 * @return
 	 */
+	@NonNull
 	public static NotExecutableException notExecutable(@NonNull String key, @NonNull Object... args){
 		return new NotExecutableException(key, args);
 	}
@@ -62,6 +66,7 @@ public class CommandException extends Exception {
 	 * @param args
 	 * @return
 	 */
+	@NonNull
 	public static RatelimitedException ratelimited(@NonNull String key, @NonNull Object... args){
 		return new RatelimitedException(key, args);
 	}

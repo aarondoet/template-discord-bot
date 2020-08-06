@@ -28,6 +28,7 @@ public class Events {
 	 * @param client The {@link GatewayDiscordClient} on which the events should get registered on
 	 * @return An empty {@link Mono} containing all the event subscriptions
 	 */
+	@NonNull
 	public static Mono<Void> registerEvents(@NonNull GatewayDiscordClient client){
 		logger.info("Registering all events");
 		final String selfId = client.getSelfId().asString();
@@ -77,7 +78,7 @@ public class Events {
 									// command does not exist
 									if(command == null) return Mono.empty();
 									
-									ArgumentList args = spaceIndex == -1 ? new ArgumentList() : ArgumentList.of(strippedContent.substring(spaceIndex + 1));
+									ArgumentList args = spaceIndex == -1 ? ArgumentList.empty() : ArgumentList.of(strippedContent.substring(spaceIndex + 1));
 									return command.execute(event, language, prefix, args);
 								}))
 						)

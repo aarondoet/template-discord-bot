@@ -18,7 +18,8 @@ import java.util.stream.Collectors;
 
 public class PermissionManager {
 	
-	private static Mono<Void> checkExecutability(Snowflake guildId, Snowflake userId, List<Snowflake> roleIds, PermissionSet effectivePermissions, Command.Permission requiredPermissions){
+	@NonNull
+	private static Mono<Void> checkExecutability(@NonNull Snowflake guildId, @NonNull Snowflake userId, @NonNull List<Snowflake> roleIds, @NonNull PermissionSet effectivePermissions, @Nullable Command.Permission requiredPermissions){
 		if(DiscordCache.getGuild(guildId).map(DiscordCache.MinimalGuild::getOwnerId).map(userId::equals).orElse(false)) return Mono.empty();
 		if(requiredPermissions == null) return Mono.empty();
 		return DataHandler.getPermissions(requiredPermissions.getPermissionName(), guildId)
@@ -58,6 +59,7 @@ public class PermissionManager {
 	 * @return An empty {@link Mono} if the user has the needed permissions, otherwise a {@link Mono} containing a
 	 * {@link de.l0c4lh057.templatebot.commands.exceptions.CommandException} describing why the permissions are missing.
 	 */
+	@NonNull
 	public static Mono<Void> checkExecutability(@Nullable Snowflake guildId, @NonNull Snowflake userId,
 	                                            @NonNull Snowflake channelId, @Nullable Command.Permission permission,
 	                                            boolean requiresGuildOwner, boolean requiresNsfwChannel){
@@ -131,11 +133,30 @@ public class PermissionManager {
 			this.isWhitelist = isWhitelist;
 			this.isUser = isUser;
 		}
+		/**
+		 * @return
+		 */
 		public Snowflake getTargetId(){ return targetId; }
+		/**
+		 * @return
+		 */
 		public boolean isWhitelist(){ return isWhitelist; }
+		/**
+		 * @return
+		 */
 		public boolean isBlacklist(){ return !isWhitelist; }
+		/**
+		 * @return
+		 */
 		public boolean isUser(){ return isUser; }
+		/**
+		 * @return
+		 */
 		public boolean isRole(){ return !isUser; }
+		/**
+		 *
+		 * @return
+		 */
 		public static CommandPermission ofRow(@NonNull Row row){
 			return new CommandPermission(
 					Snowflake.of(row.get("targetId", Long.class)),

@@ -13,7 +13,7 @@ import java.util.Map;
 public class MemberRatelimit extends Ratelimit {
 	private Map<Long, Map<Long, Bucket>> buckets = new HashMap<>();
 	private Map<Long, Bucket> noGuildBuckets = new HashMap<>();
-	MemberRatelimit(List<Bandwidth> bandwidths){
+	MemberRatelimit(@NonNull List<Bandwidth> bandwidths){
 		this.bandwidths = bandwidths;
 	}
 	@Override
