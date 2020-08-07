@@ -2,6 +2,7 @@ package de.l0c4lh057.templatebot.commands;
 
 import de.l0c4lh057.templatebot.commands.exceptions.*;
 import de.l0c4lh057.templatebot.utils.BotUtils;
+import de.l0c4lh057.templatebot.utils.Permission;
 import de.l0c4lh057.templatebot.utils.ratelimits.NoRatelimit;
 import de.l0c4lh057.templatebot.utils.ratelimits.Ratelimit;
 import de.l0c4lh057.templatebot.utils.ratelimits.RatelimitFactory;
@@ -11,7 +12,6 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.discordjson.json.EmbedData;
-import discord4j.rest.util.PermissionSet;
 import io.github.bucket4j.Bandwidth;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,7 +88,7 @@ public class Command {
 	@NonNull public String getName(){ return name; }
 	
 	/**
-	 * @return All the aliases of the command
+	 * @return All the aliases of the command (does not include the name returned by {@link #getName()})
 	 */
 	@NonNull public String[] getAliases(){ return aliases; }
 	
@@ -280,9 +280,16 @@ public class Command {
 		return new CommandCollectionBuilder();
 	}
 	
+	/**
+	 * Checks if the passed value is a command and if it either has the same name or is the exact same instance of the
+	 * {@link Command} class.
+	 *
+	 * @param o The object to check equality with
+	 * @return Whether the passed value is equal to this command
+	 */
 	@Override
 	public boolean equals(@Nullable Object o){
-		return (o instanceof Command) && ((Command)o).name.equals(name);
+		return (o instanceof Command) && (o == this || ((Command)o).name.equals(name));
 	}
 	
 	@Override
@@ -385,8 +392,8 @@ public class Command {
 		}
 		
 		/**
-		 * @param requiresBotOwner
-		 * @return
+		 * @param requiresBotOwner Whether this command can only be executed by people stated in {@link BotUtils#botOwners}
+		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
 		@NonNull
 		public CommandBuilder setRequiresBotOwner(boolean requiresBotOwner){
@@ -395,8 +402,8 @@ public class Command {
 		}
 		
 		/**
-		 * @param requiresGuildOwner
-		 * @return
+		 * @param requiresGuildOwner Whether this command can only be executed by the owner of the guild it is executed in
+		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
 		@NonNull
 		public CommandBuilder setRequiresGuildOwner(boolean requiresGuildOwner){
@@ -405,13 +412,14 @@ public class Command {
 		}
 		
 		/**
-		 * @param permissionName
-		 * @param defaultPermissions
+		 * @param permissionName     The name of the permission
+		 * @param defaultPermissions The list of discord {@link discord4j.rest.util.Permission}s that you need to be able to
+		 *                           execute the command by default
 		 * @return
 		 */
 		@NonNull
 		public CommandBuilder setRequiredPermissions(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
-			this.requiredPermissions = new Permission(permissionName, defaultPermissions);
+			this.requiredPermissions = Permission.of(permissionName, defaultPermissions);
 			return this;
 		}
 		
@@ -560,7 +568,7 @@ public class Command {
 		 */
 		@NonNull
 		public CommandCollectionBuilder setRequiredPermissions(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
-			this.requiredPermissions = new Permission(permissionName, defaultPermissions);
+			this.requiredPermissions = Permission.of(permissionName, defaultPermissions);
 			return this;
 		}
 		
@@ -678,23 +686,6 @@ public class Command {
 			}
 			return null;
 		}
-	}
-	
-	public static class Permission {
-		private final String permissionName;
-		private final PermissionSet defaultPermissions;
-		private Permission(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
-			this.permissionName = permissionName;
-			this.defaultPermissions = PermissionSet.of(defaultPermissions);
-		}
-		/**
-		 * @return
-		 */
-		@NonNull public String getPermissionName(){ return permissionName; }
-		/**
-		 * @return
-		 */
-		@NonNull public PermissionSet getDefaultPermissions(){ return defaultPermissions; }
 	}
 	
 }
