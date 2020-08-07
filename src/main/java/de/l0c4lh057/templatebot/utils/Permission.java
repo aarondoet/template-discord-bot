@@ -23,10 +23,14 @@ public class Permission {
 		this.defaultPermissions = PermissionSet.of(defaultPermissions);
 	}
 	
+	@NonNull
 	public static Permission of(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
-		Permission permission = new Permission(permissionName, defaultPermissions);
-		if(allPermissions.stream().anyMatch(p -> p.permissionName.equals(permissionName) && p.defaultPermissions.equals(PermissionSet.of(defaultPermissions))))
+		Permission perm = allPermissions.stream().filter(p -> p.permissionName.equals(permissionName)).findAny().orElse(null);
+		if(perm != null){
+			if(perm.defaultPermissions.equals(PermissionSet.of(defaultPermissions))) return perm;
 			logger.warn("Permission {} already exists with another list of default permissions.", permissionName);
+		}
+		Permission permission = new Permission(permissionName, defaultPermissions);
 		allPermissions.add(permission);
 		return permission;
 	}
@@ -35,6 +39,7 @@ public class Permission {
 	 *
 	 * @return
 	 */
+	@NonNull
 	public static Set<Permission> getAllPermissions(){
 		return Collections.unmodifiableSet(allPermissions);
 	}
