@@ -1,6 +1,8 @@
 package de.l0c4lh057.templatebot.utils;
 
 import discord4j.rest.util.PermissionSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.util.annotation.NonNull;
 
 import java.util.Collections;
@@ -8,6 +10,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Permission {
+	
+	private static final Logger logger = LogManager.getLogger("Permissions");
 	
 	private static final Set<Permission> allPermissions = new HashSet<>();
 	
@@ -21,6 +25,8 @@ public class Permission {
 	
 	public static Permission of(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
 		Permission permission = new Permission(permissionName, defaultPermissions);
+		if(allPermissions.stream().anyMatch(p -> p.permissionName.equals(permissionName) && p.defaultPermissions.equals(PermissionSet.of(defaultPermissions))))
+			logger.warn("Permission {} already exists with another list of default permissions.", permissionName);
 		allPermissions.add(permission);
 		return permission;
 	}
