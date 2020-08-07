@@ -18,16 +18,35 @@ public class Permission {
 	private final String permissionName;
 	private final PermissionSet defaultPermissions;
 	
-	private Permission(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
+	private Permission(@NonNull String permissionName, @NonNull PermissionSet defaultPermissions){
 		this.permissionName = permissionName;
-		this.defaultPermissions = PermissionSet.of(defaultPermissions);
+		this.defaultPermissions = defaultPermissions;
 	}
 	
+	/**
+	 * TODO add description
+	 *
+	 * @param permissionName     The permission name
+	 * @param defaultPermissions The list of permissions you need to have this permission by default
+	 * @return The {@link Permission} object
+	 */
 	@NonNull
 	public static Permission of(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
+		return of(permissionName, PermissionSet.of(defaultPermissions));
+	}
+	
+	/**
+	 * TODO add description
+	 *
+	 * @param permissionName     The permission name
+	 * @param defaultPermissions The set of permissions you need to have this permission by default
+	 * @return The {@link Permission} object
+	 */
+	@NonNull
+	public static Permission of(@NonNull String permissionName, @NonNull PermissionSet defaultPermissions){
 		Permission perm = allPermissions.stream().filter(p -> p.permissionName.equals(permissionName)).findAny().orElse(null);
 		if(perm != null){
-			if(perm.defaultPermissions.equals(PermissionSet.of(defaultPermissions))) return perm;
+			if(perm.defaultPermissions.equals(defaultPermissions)) return perm;
 			logger.warn("Permission {} already exists with another list of default permissions.", permissionName);
 		}
 		Permission permission = new Permission(permissionName, defaultPermissions);
@@ -36,8 +55,7 @@ public class Permission {
 	}
 	
 	/**
-	 *
-	 * @return
+	 * @return The set of all {@link Permission}s instantiated before the call of this function
 	 */
 	@NonNull
 	public static Set<Permission> getAllPermissions(){
@@ -45,7 +63,7 @@ public class Permission {
 	}
 	
 	/**
-	 * @return
+	 * @return The name of the permission used for database lookup
 	 */
 	@NonNull
 	public String getPermissionName(){
@@ -53,7 +71,8 @@ public class Permission {
 	}
 	
 	/**
-	 * @return
+	 * @return The {@link PermissionSet} of all {@link discord4j.rest.util.Permission}s you need to have the permission
+	 * by default
 	 */
 	@NonNull
 	public PermissionSet getDefaultPermissions(){

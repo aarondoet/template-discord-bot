@@ -20,22 +20,21 @@ public class DBGuild {
 	}
 	
 	/**
-	 * @return
+	 * @return The guild ID
 	 */
 	@NonNull public Snowflake getId(){ return id; }
 	/**
-	 * @return
+	 * @return The prefix used in the guild
 	 */
 	@NonNull public String getPrefix(){ return prefix; }
 	/**
-	 * @return
+	 * @return The language specified for this guild
 	 */
 	@NonNull public String getLanguage() { return language; }
 	
 	/**
-	 *
-	 * @param row
-	 * @return
+	 * @param row The {@link Row} to get the data from
+	 * @return A new {@link DBGuild} based on the values of the {@link Row}
 	 */
 	@NonNull
 	public static DBGuild ofRow(@NonNull Row row){

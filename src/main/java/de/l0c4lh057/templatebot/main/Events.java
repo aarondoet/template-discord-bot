@@ -51,7 +51,10 @@ public class Events {
 						.doOnNext(event -> event.getMember().ifPresent(DiscordCache::addMember))
 						.flatMap(event -> Mono.justOrEmpty(event.getMessage().getAuthor())
 								// put user in database if message came from DM
-								.flatMap(user -> event.getGuildId().map(gId -> Mono.empty().then()).orElse(DataHandler.initializeUser(user.getId())))
+								.flatMap(user -> {
+									if(event.getGuildId().isPresent()) return Mono.empty();
+									else return DataHandler.initializeUser(user.getId());
+								})
 								.then(
 										event.getGuildId().map(id -> BotUtils.getGuildPrefix(id).zipWith(BotUtils.getGuildLanguage(id)))
 												.orElseGet(() -> event.getMessage().getAuthor().map(User::getId).map(id -> BotUtils.getUserPrefix(id)

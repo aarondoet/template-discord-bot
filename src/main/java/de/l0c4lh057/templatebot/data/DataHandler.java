@@ -61,7 +61,7 @@ public class DataHandler {
 			this.name = name;
 		}
 		/**
-		 * @return
+		 * @return The name of the table in the database
 		 */
 		@NonNull public String getName() { return name; }
 	}
@@ -110,17 +110,18 @@ public class DataHandler {
 	 * Puts the default values into the database for the provided ID. Nothing happens if the guild is already saved.
 	 *
 	 * @param guildId The ID of the guild that should get put into the database
-	 * @return An empty {@link Mono}
+	 * @return A {@link Mono} that upon success emits {@code true} if the guild got inserted into the database or
+	 * {@code false} if the guild was already saved.
 	 */
 	@NonNull
-	public static Mono<Void> initializeGuild(@NonNull Snowflake guildId){
+	public static Mono<Boolean> initializeGuild(@NonNull Snowflake guildId){
 		return getConnection().flatMap(con -> Mono.from(con.createStatement("INSERT INTO " + Tables.GUILDS.getName() + " (guildId, prefix, language) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING")
 				.bind("$1", guildId.asLong())
 				.bind("$2", DBGuild.defaultGuild.getPrefix())
 				.bind("$3", DBGuild.defaultGuild.getLanguage())
 				.execute())
-				.flatMapMany(Result::getRowsUpdated)
-				.then()
+				.flatMapMany(Result::getRowsUpdated).next()
+				.map(i -> i > 0)
 		);
 	}
 	
@@ -128,17 +129,18 @@ public class DataHandler {
 	 * Puts the default values into the database for the provided ID. Nothing happens if the user is already saved.
 	 *
 	 * @param userId The ID of the user that should get put into the database.
-	 * @return An empty {@link Mono}
+	 * @return A {@link Mono} that upon success emits {@code true} if the user got inserted into the database or
+	 * {@code false} if the user was already saved.
 	 */
 	@NonNull
-	public static Mono<Void> initializeUser(@NonNull Snowflake userId){
+	public static Mono<Boolean> initializeUser(@NonNull Snowflake userId){
 		return getConnection().flatMap(con -> Mono.from(con.createStatement("INSERT INTO " + Tables.USERS.getName() + " (userId, prefix, language) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING")
 				.bind("$1", userId.asLong())
 				.bind("$2", DBUser.defaultUser.getPrefix())
 				.bind("$3", DBUser.defaultUser.getLanguage())
 				.execute())
-				.flatMapMany(Result::getRowsUpdated)
-				.then()
+				.flatMapMany(Result::getRowsUpdated).next()
+				.map(i -> i > 0)
 		);
 	}
 	

@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class PermissionManager {
 	
 	@NonNull
-	private static Mono<Void> checkExecutability(@NonNull Snowflake guildId, @NonNull Snowflake userId, @NonNull List<Snowflake> roleIds, @NonNull PermissionSet effectivePermissions, @Nullable Command.Permission requiredPermissions){
+	private static Mono<Void> checkExecutability(@NonNull Snowflake guildId, @NonNull Snowflake userId, @NonNull List<Snowflake> roleIds, @NonNull PermissionSet effectivePermissions, @Nullable de.l0c4lh057.templatebot.utils.Permission requiredPermissions){
 		if(DiscordCache.getGuild(guildId).map(DiscordCache.MinimalGuild::getOwnerId).map(userId::equals).orElse(false)) return Mono.empty();
 		if(requiredPermissions == null) return Mono.empty();
 		return DataHandler.getPermissions(requiredPermissions.getPermissionName(), guildId)
@@ -61,7 +61,7 @@ public class PermissionManager {
 	 */
 	@NonNull
 	public static Mono<Void> checkExecutability(@Nullable Snowflake guildId, @NonNull Snowflake userId,
-	                                            @NonNull Snowflake channelId, @Nullable Command.Permission permission,
+	                                            @NonNull Snowflake channelId, @Nullable de.l0c4lh057.templatebot.utils.Permission permission,
 	                                            boolean requiresGuildOwner, boolean requiresNsfwChannel){
 		if(guildId == null) return Mono.empty();
 		return Mono.justOrEmpty(DiscordCache.getGuild(guildId).flatMap(guild -> guild.getMember(userId)))
@@ -92,7 +92,7 @@ public class PermissionManager {
 	 * {@link de.l0c4lh057.templatebot.commands.exceptions.CommandException} describing why the permissions are missing.
 	 */
 	public static Mono<Void> checkExecutability(@Nullable Snowflake guildId, @NonNull Snowflake userId,
-	                                            @NonNull Snowflake channelId, @NonNull Command.Permission permission,
+	                                            @NonNull Snowflake channelId, @NonNull de.l0c4lh057.templatebot.utils.Permission permission,
 	                                            boolean requiresGuildOwner){
 		return checkExecutability(guildId, userId, channelId, permission, requiresGuildOwner, false);
 	}
@@ -107,7 +107,7 @@ public class PermissionManager {
 	 * {@link de.l0c4lh057.templatebot.commands.exceptions.CommandException} describing why the permissions are missing.
 	 */
 	public static Mono<Void> checkExecutability(@Nullable Snowflake guildId, @NonNull Snowflake userId,
-																							@NonNull Command.Permission permission, boolean requiresGuildOwner){
+	                                            @NonNull de.l0c4lh057.templatebot.utils.Permission permission, boolean requiresGuildOwner){
 		if(guildId == null) return Mono.empty();
 		return Mono.justOrEmpty(DiscordCache.getGuild(guildId).flatMap(guild -> guild.getMember(userId)))
 				.switchIfEmpty(Mono.error(CommandException.missingPermissions("exception.notcached")))
@@ -128,34 +128,37 @@ public class PermissionManager {
 		private final Snowflake targetId;
 		private final boolean isWhitelist;
 		private final boolean isUser;
+		
 		private CommandPermission(Snowflake targetId, boolean isWhitelist, boolean isUser){
 			this.targetId = targetId;
 			this.isWhitelist = isWhitelist;
 			this.isUser = isUser;
 		}
+		
 		/**
-		 * @return
+		 * @return The ID of the target of this permission overwrite
 		 */
 		public Snowflake getTargetId(){ return targetId; }
 		/**
-		 * @return
+		 * @return {@code true} if this permission overwrite is a whitelist entry, otherwise {@code false}
 		 */
 		public boolean isWhitelist(){ return isWhitelist; }
 		/**
-		 * @return
+		 * @return {@code true} if this permission overwrite is a blacklist entry, otherwise {@code false}
 		 */
 		public boolean isBlacklist(){ return !isWhitelist; }
 		/**
-		 * @return
+		 * @return {@code true} if this permission overwrite is for a user, otherwise {@code false}
 		 */
 		public boolean isUser(){ return isUser; }
 		/**
-		 * @return
+		 * @return {@code true} if this permission overwrite is for a role, otherwise {@code false}
 		 */
 		public boolean isRole(){ return !isUser; }
+		
 		/**
-		 *
-		 * @return
+		 * @param row The {@link Row} to get the data from
+		 * @return The {@link CommandPermission} based on the {@link Row} entries
 		 */
 		public static CommandPermission ofRow(@NonNull Row row){
 			return new CommandPermission(

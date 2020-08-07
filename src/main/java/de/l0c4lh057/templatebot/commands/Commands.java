@@ -17,10 +17,7 @@ import reactor.util.annotation.NonNull;
 import reactor.util.annotation.Nullable;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -85,7 +82,7 @@ public class Commands {
 													Command.Category newCategory = Command.Category.getCategoryByHelpPage(helpPage.get());
 													return Mono.when(
 															message.removeReaction(ev.getEmoji(), ev.getUserId()),
-															message.edit(mes -> mes.setEmbed(BotUtils.getHelpSpec(language, prefix, newCategory)))
+															message.edit(mes -> mes.setEmbed(BotUtils.getHelpSpec(language, prefix, Objects.requireNonNull(newCategory))))
 													);
 												})
 								))
@@ -152,9 +149,8 @@ public class Commands {
 	}
 	
 	/**
-	 *
-	 * @param name
-	 * @return
+	 * @param name The name of the command to find
+	 * @return The {@link Command} with the specified name
 	 */
 	@Nullable
 	public static Command getCommand(@NonNull String name){
@@ -162,8 +158,7 @@ public class Commands {
 	}
 	
 	/**
-	 *
-	 * @return
+	 * @return A {@link Stream} of all commands without any duplicates
 	 */
 	@NonNull
 	public static Stream<Command> getCommands(){
@@ -172,9 +167,8 @@ public class Commands {
 	}
 	
 	/**
-	 *
-	 * @param category
-	 * @return
+	 * @param category The {@link Command.Category} of which the {@link Command}s should get returned
+	 * @return A {@link Stream} with all {@link Command}s in the specified {@link Command.Category} without duplicates
 	 */
 	@NonNull
 	public static Stream<Command> getCommands(@NonNull Command.Category category){

@@ -7,13 +7,11 @@ import java.util.Collection;
 
 public class ArgumentList extends ArrayList<String> {
 	
-	private final static ArgumentList empty = new ArgumentList();
-	
 	private int index = 0;
 	private int filteredSize = -1;
 	
 	private static boolean isEmptyArgument(@NonNull String argument){
-		return argument.length() == 0 || (argument.length() == 1 && !(Character.isWhitespace(argument.charAt(0)) && argument.equals(" ")));
+		return argument.length() == 0 || (argument.length() == 1 && Character.isWhitespace(argument.charAt(0)) && !argument.equals(" "));
 	}
 	
 	private ArgumentList(){
@@ -24,12 +22,16 @@ public class ArgumentList extends ArrayList<String> {
 		super(c);
 	}
 	
-	public static ArgumentList empty(){ return empty; }
+	/**
+	 * @return An empty {@link ArgumentList} instance
+	 */
+	public static ArgumentList empty(){ return new ArgumentList(); }
 	
 	/**
+	 * TODO add description here
 	 *
-	 * @param content
-	 * @return
+	 * @param content The input that should get parsed into a list of arguments
+	 * @return A new {@link ArgumentList} containing all the arguments parsed from the input
 	 */
 	@NonNull
 	public static ArgumentList of(@NonNull String content){
@@ -85,17 +87,15 @@ public class ArgumentList extends ArrayList<String> {
 	}
 	
 	/**
-	 *
-	 * @return
+	 * @return Whether there is a next argument in this list if empty arguments are skipped
 	 */
 	public boolean hasNext(){
 		return hasNext(true);
 	}
 	
 	/**
-	 *
-	 * @param skipEmpty
-	 * @return
+	 * @param skipEmpty If set to {@code true}, empty arguments will be skipped
+	 * @return Whether there is a next argument in this list
 	 */
 	public boolean hasNext(boolean skipEmpty){
 		if(!skipEmpty) return index < size();
@@ -107,8 +107,10 @@ public class ArgumentList extends ArrayList<String> {
 	}
 	
 	/**
+	 * This function skips empty arguments and increments the index, which means that the next call of this function
+	 * will return the argument after the one returned in the current call.
 	 *
-	 * @return
+	 * @return The next argument
 	 */
 	@NonNull
 	public String getNext(){
@@ -116,9 +118,12 @@ public class ArgumentList extends ArrayList<String> {
 	}
 	
 	/**
+	 * This function skips empty arguments.
 	 *
-	 * @param increment
-	 * @return
+	 * @param increment If set to {@code true}, the index of the current argument will be increased. Otherwise it will
+	 *                  just return the next argument and not increase the index, meaning that the next call of a
+	 *                  {@code getNext} function will return the same argument again.
+	 * @return The next argument
 	 */
 	@NonNull
 	public String getNext(boolean increment){
@@ -127,9 +132,14 @@ public class ArgumentList extends ArrayList<String> {
 	
 	/**
 	 *
-	 * @param skipEmpty
-	 * @param increment
-	 * @return
+	 *
+	 * @param skipEmpty Whether empty arguments should get skipped. An argument is considered empty if it has the length
+	 *                  0 and they typically appear when a user auto completes emojis/mentions where a space is inserted
+	 *                  afterwards and then presses the space key again.
+	 * @param increment If set to {@code true}, the index of the current argument will be increased. Otherwise it will
+	 *                  just return the next argument and not increase the index, meaning that the next call of a
+	 *                  {@code getNext} function will return the same argument again.
+	 * @return The next argument
 	 */
 	@NonNull
 	public String getNext(boolean skipEmpty, boolean increment){
@@ -143,8 +153,7 @@ public class ArgumentList extends ArrayList<String> {
 	}
 	
 	/**
-	 *
-	 * @return
+	 * @return The current argument
 	 */
 	@NonNull
 	public String getCurrent(){
@@ -152,8 +161,12 @@ public class ArgumentList extends ArrayList<String> {
 	}
 	
 	/**
+	 * This function joins all remaining arguments with a space and returns the string created by that.
+	 * <p>
+	 * This is preferred over {@link String#join(CharSequence, Iterable)} because arguments are split on all whitespaces,
+	 * not just spaces, and this function takes care of that.
 	 *
-	 * @return
+	 * @return The remaining arguments all joined with a space inbetween
 	 */
 	@NonNull
 	public String getRemaining(){
@@ -175,8 +188,7 @@ public class ArgumentList extends ArrayList<String> {
 	}
 	
 	/**
-	 *
-	 * @return
+	 * @return The size of this list with all empty arguments removed.
 	 */
 	public int getFilteredSize(){
 		if(filteredSize != -1) return filteredSize;
@@ -185,16 +197,14 @@ public class ArgumentList extends ArrayList<String> {
 	}
 	
 	/**
-	 *
-	 * @return
+	 * @return The index of the current argument
 	 */
 	public int getCurrentIndex(){
 		return index;
 	}
 	
 	/**
-	 *
-	 * @param index
+	 * @param index The new index you want to use as a starting point
 	 */
 	public void setCurrentIndex(int index){
 		this.index = index;

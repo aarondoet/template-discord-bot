@@ -15,7 +15,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.NonNull;
-import reactor.util.annotation.Nullable;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -28,13 +27,22 @@ import java.util.stream.Collectors;
 
 public class BotUtils {
 	
-	private static final Logger logger = LogManager.getLogger("Utils");
+	private static final Logger logger = LogManager.getLogger("BotUtils");
 	
 	private BotUtils(){}
 	
 	/* TODO: set the desired values */
+	/**
+	 * The {@link List} of all users that should be considered an owner of this bot
+	 */
 	public static final List<Snowflake> botOwners = Collections.singletonList(Snowflake.of(226677096091484160L));
+	/**
+	 * The {@link Color} used in several {@link Command}s as embed color
+	 */
 	public static final Color BOT_COLOR = Color.of(0x0);
+	/**
+	 * The prefix that should get used by default if not changed by any user
+	 */
 	public static final String DEFAULT_PREFIX = "=";
 	
 	public static final Color COLOR_DARK_RED = Color.of(0xFF0000);
@@ -47,6 +55,10 @@ public class BotUtils {
 	public static final ReactionEmoji EMOJI_CHECKMARK = ReactionEmoji.unicode("\u2705");
 	
 	private static final Map<Long, String> guildPrefixes = new WeakHashMap<>();
+	/**
+	 * @param guildId The guild ID
+	 * @return The prefix used in the specified guild
+	 */
 	@NonNull public static Mono<String> getGuildPrefix(@NonNull Snowflake guildId){
 		String prefix = guildPrefixes.get(guildId.asLong());
 		if(prefix != null) return Mono.just(prefix);
@@ -55,6 +67,10 @@ public class BotUtils {
 				.doOnNext(pref -> guildPrefixes.put(guildId.asLong(), pref));
 	}
 	private static final Map<Long, String> guildLanguages = new WeakHashMap<>();
+	/**
+	 * @param guildId The guild ID
+	 * @return The language used in the specified guild
+	 */
 	@NonNull public static Mono<String> getGuildLanguage(@NonNull Snowflake guildId){
 		String language = guildLanguages.get(guildId.asLong());
 		if(language != null) return Mono.just(language);
@@ -64,6 +80,10 @@ public class BotUtils {
 	}
 	
 	private static final Map<Long, String> userPrefixes = new WeakHashMap<>();
+	/**
+	 * @param userId The user ID
+	 * @return The prefix used by the specified user
+	 */
 	@NonNull public static Mono<String> getUserPrefix(@NonNull Snowflake userId){
 		String prefix = userPrefixes.get(userId.asLong());
 		if(prefix != null) return Mono.just(prefix);
@@ -73,6 +93,10 @@ public class BotUtils {
 				.doOnNext(pref -> userPrefixes.put(userId.asLong(), pref));
 	}
 	private static final Map<Long, String> userLanguages = new WeakHashMap<>();
+	/**
+	 * @param userId The user ID
+	 * @return The langauge used by the specified user
+	 */
 	@NonNull public static Mono<String> getUserLanguage(@NonNull Snowflake userId){
 		String language = userLanguages.get(userId.asLong());
 		if(language != null) return Mono.just(language);
@@ -80,31 +104,6 @@ public class BotUtils {
 				.doOnNext(user -> userPrefixes.put(userId.asLong(), user.getPrefix()))
 				.map(DBUser::getLanguage)
 				.doOnNext(lang -> userLanguages.put(userId.asLong(), lang));
-	}
-	
-	/**
-	 *
-	 * @param text
-	 * @return
-	 */
-	@NonNull
-	public static String escapeRegex(@NonNull String text){
-		return text.replaceAll("[\\<\\(\\[\\{\\\\\\^\\-\\=\\$\\!\\|\\]\\}\\)\\?\\*\\+\\.\\>]", "\\\\$0");
-	}
-	
-	/**
-	 *
-	 * @param template
-	 * @param replace
-	 * @return
-	 */
-	@NonNull
-	public static String replaceAll(@NonNull String template, @NonNull Map<String, String> replace){
-		Matcher matcher = Pattern.compile("(" + replace.keySet().stream().map(BotUtils::escapeRegex).collect(Collectors.joining("|")) + ")").matcher(template);
-		StringBuffer sb = new StringBuffer();
-		while(matcher.find()) matcher.appendReplacement(sb, replace.get(matcher.group(1)));
-		matcher.appendTail(sb);
-		return sb.toString();
 	}
 	
 	/**
@@ -122,10 +121,12 @@ public class BotUtils {
 	}
 	
 	/**
+	 * Gets the help page by checking the provided arguments for a page number or category name. If no category can be
+	 * found by checking the arguments the category with help page 1 is returned.
 	 *
-	 * @param lang
-	 * @param args
-	 * @return
+	 * @param lang The language in which category names should get checked in
+	 * @param args The arguments
+	 * @return The category specified in the arguments or the first category
 	 */
 	@NonNull
 	public static Command.Category getHelpPage(@NonNull String lang, @NonNull List<String> args){
@@ -140,7 +141,6 @@ public class BotUtils {
 	}
 	
 	/**
-	 *
 	 * @param language
 	 * @param prefix
 	 * @param category
@@ -220,11 +220,10 @@ public class BotUtils {
 	}
 	
 	/**
-	 *
-	 * @param language
-	 * @param key
-	 * @param args
-	 * @return
+	 * @param language The language the returned string should be in
+	 * @param key      The key for the string in the {@link ResourceBundle}s
+	 * @param args     The arguments used to format the string
+	 * @return The formatted string
 	 */
 	@NonNull
 	public static String getLanguageString(@NonNull String language, @NonNull String key, @NonNull Object... args){

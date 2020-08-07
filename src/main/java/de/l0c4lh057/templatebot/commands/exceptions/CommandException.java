@@ -7,8 +7,6 @@ import reactor.util.annotation.NonNull;
 
 public class CommandException extends Exception {
 	
-	private static final Logger logger = LogManager.getLogger("CommandException");
-	
 	private final String key;
 	private final Object[] args;
 	
@@ -18,9 +16,8 @@ public class CommandException extends Exception {
 	}
 	
 	/**
-	 *
-	 * @param language
-	 * @return
+	 * @param language The language in which the error message should be
+	 * @return The error message
 	 */
 	@NonNull
 	public String getErrorMessage(@NonNull String language){
@@ -28,10 +25,9 @@ public class CommandException extends Exception {
 	}
 	
 	/**
-	 *
-	 * @param key
-	 * @param args
-	 * @return
+	 * @param key  The key which should be used to get the language string from the {@link java.util.ResourceBundle}
+	 * @param args The arguments used to format the plain language string
+	 * @return The new {@link InvalidArgumentException}
 	 */
 	@NonNull
 	public static InvalidArgumentException invalidArgument(@NonNull String key, @NonNull Object... args){
@@ -39,10 +35,9 @@ public class CommandException extends Exception {
 	}
 	
 	/**
-	 *
-	 * @param key
-	 * @param args
-	 * @return
+	 * @param key  The key which should be used to get the language string from the {@link java.util.ResourceBundle}
+	 * @param args The arguments used to format the plain language string
+	 * @return The new {@link MissingPermissionsException}
 	 */
 	@NonNull
 	public static MissingPermissionsException missingPermissions(@NonNull String key, @NonNull Object... args){
@@ -50,10 +45,9 @@ public class CommandException extends Exception {
 	}
 	
 	/**
-	 *
-	 * @param key
-	 * @param args
-	 * @return
+	 * @param key  The key which should be used to get the language string from the {@link java.util.ResourceBundle}
+	 * @param args The arguments used to format the plain language string
+	 * @return The new {@link NotExecutableException}
 	 */
 	@NonNull
 	public static NotExecutableException notExecutable(@NonNull String key, @NonNull Object... args){
@@ -61,10 +55,9 @@ public class CommandException extends Exception {
 	}
 	
 	/**
-	 *
-	 * @param key
-	 * @param args
-	 * @return
+	 * @param key  The key which should be used to get the language string from the {@link java.util.ResourceBundle}
+	 * @param args The arguments used to format the plain language string
+	 * @return The new {@link RatelimitedException}
 	 */
 	@NonNull
 	public static RatelimitedException ratelimited(@NonNull String key, @NonNull Object... args){

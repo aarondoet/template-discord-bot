@@ -413,9 +413,9 @@ public class Command {
 		
 		/**
 		 * @param permissionName     The name of the permission
-		 * @param defaultPermissions The list of discord {@link discord4j.rest.util.Permission}s that you need to be able to
-		 *                           execute the command by default
-		 * @return
+		 * @param defaultPermissions The list of {@link discord4j.rest.util.Permission}s you need to be able to execute this
+		 *                           command by default
+		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
 		@NonNull
 		public CommandBuilder setRequiredPermissions(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
@@ -424,20 +424,13 @@ public class Command {
 		}
 		
 		/**
-		 *
-		 * @param type
-		 * @param bandwidths
-		 * @return
+		 * @param type       The {@link RatelimitType} for this {@link Ratelimit}
+		 * @param bandwidths The list of {@link Bandwidth}s
+		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
 		@NonNull
 		public CommandBuilder setRatelimit(@NonNull RatelimitType type, @NonNull Bandwidth... bandwidths){
 			this.ratelimit = RatelimitFactory.getRatelimit(type, List.of(bandwidths));
-			return this;
-		}
-		
-		@NonNull
-		private CommandBuilder setRatelimit(@NonNull Ratelimit ratelimit){
-			this.ratelimit = ratelimit;
 			return this;
 		}
 		
@@ -562,9 +555,10 @@ public class Command {
 		
 		/**
 		 *
-		 * @param permissionName
-		 * @param defaultPermissions
-		 * @return
+		 * @param permissionName     The name of the permission
+		 * @param defaultPermissions The list of {@link discord4j.rest.util.Permission}s you need to be able to execute this
+		 *                           command by default
+		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
 		 */
 		@NonNull
 		public CommandCollectionBuilder setRequiredPermissions(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
@@ -628,17 +622,22 @@ public class Command {
 	public interface CommandExecutor {
 		/**
 		 *
-		 * @param event
-		 * @param language
-		 * @param prefix
-		 * @param args
-		 * @return
+		 * @param event    The raw {@link MessageCreateEvent} that caused the execution of this command
+		 * @param language The language used in the {@link discord4j.core.object.entity.Guild} or
+		 *                 {@link discord4j.core.object.entity.channel.PrivateChannel} this command got executed in
+		 * @param prefix   The prefix used in the {@link discord4j.core.object.entity.Guild} or
+		 *                 {@link discord4j.core.object.entity.channel.PrivateChannel} this command got executed in
+		 * @param args     The arguments passed to the command call
+		 * @return An empty {@link Mono}. If any exception appears during command execution it will get emitted through this
+		 * Mono.
 		 */
 		@NonNull
 		Mono<?> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args);
 	}
 	
 	public enum Category {
+		// Every Category should have its own helpPage. The first Category should have the helpPage 1, the second Category
+		// the helpPage 2 and so on. The order of the Categories in here does not matter tho.
 		GENERAL(1, "commandcategory.general")
 		;
 		private final int helpPage;
@@ -648,21 +647,18 @@ public class Command {
 			this.nameKey = nameKey;
 		}
 		/**
-		 *
-		 * @return
+		 * @return The number on which help page commands from this category should be on
 		 */
 		public int getHelpPage() { return helpPage; }
 		/**
-		 *
-		 * @param lang
-		 * @return
+		 * @param lang The language in which the category name should be returned in
+		 * @return The name of this category
 		 */
 		@NonNull
 		public String getName(@NonNull String lang){ return BotUtils.getLanguageString(lang, nameKey); }
 		/**
-		 *
-		 * @param helpPage
-		 * @return
+		 * @param helpPage The page number of the category
+		 * @return The {@link Category} with the specified help page number
 		 */
 		@Nullable
 		public static Category getCategoryByHelpPage(int helpPage){
@@ -674,10 +670,9 @@ public class Command {
 			return null;
 		}
 		/**
-		 *
-		 * @param lang
-		 * @param name
-		 * @return
+		 * @param lang The language that should get tested for equal category names
+		 * @param name The name of the category to find
+		 * @return The {@link Category} with the specified name
 		 */
 		@Nullable
 		public static Category getCategoryByName(@NonNull String lang, @NonNull String name){

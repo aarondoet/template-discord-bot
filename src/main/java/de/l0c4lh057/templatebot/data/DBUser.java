@@ -20,22 +20,21 @@ public class DBUser {
 	}
 	
 	/**
-	 * @return
+	 * @return The user ID
 	 */
 	@NonNull public Snowflake getId(){ return id; }
 	/**
-	 * @return
+	 * @return The prefix used by the user
 	 */
 	@NonNull public String getPrefix(){ return prefix; }
 	/**
-	 * @return
+	 * @return The language specified for this user
 	 */
 	@NonNull public String getLanguage() { return language; }
 	
 	/**
-	 *
-	 * @param row
-	 * @return
+	 * @param row The {@link Row} to get the data from
+	 * @return A new {@link DBUser} based on the values of the {@link Row}
 	 */
 	@NonNull
 	public static DBUser ofRow(@NonNull Row row){
