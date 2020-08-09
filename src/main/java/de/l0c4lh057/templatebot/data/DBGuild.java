@@ -19,17 +19,8 @@ public class DBGuild {
 		this.language = language;
 	}
 	
-	/**
-	 * @return The guild ID
-	 */
 	@NonNull public Snowflake getId(){ return id; }
-	/**
-	 * @return The prefix used in the guild
-	 */
 	@NonNull public String getPrefix(){ return prefix; }
-	/**
-	 * @return The language specified for this guild
-	 */
 	@NonNull public String getLanguage() { return language; }
 	
 	/**

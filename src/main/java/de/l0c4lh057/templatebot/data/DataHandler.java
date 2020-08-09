@@ -42,7 +42,7 @@ public class DataHandler {
 	}
 	
 	/**
-	 * Gets one of the {@link Connection}s inside the {@link ConnectionPool}.
+	 * Gets one of the {@link Connection}s inside {@link #pool}.
 	 *
 	 * @return A database connection
 	 */
@@ -91,7 +91,7 @@ public class DataHandler {
 				"targetId BIGINT," +
 				"isUser BOOLEAN," +
 				"isWhitelist BOOLEAN," +
-				"PRIMARY KEY(guildId, targetId, isUser)" +
+				"PRIMARY KEY(permissionName, guildId, targetId, isUser)" +
 				")";
 		return Mono.fromRunnable(() -> logger.info("Initializing database"))
 				.then(

@@ -21,8 +21,6 @@ import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class BotUtils {
@@ -55,10 +53,6 @@ public class BotUtils {
 	public static final ReactionEmoji EMOJI_CHECKMARK = ReactionEmoji.unicode("\u2705");
 	
 	private static final Map<Long, String> guildPrefixes = new WeakHashMap<>();
-	/**
-	 * @param guildId The guild ID
-	 * @return The prefix used in the specified guild
-	 */
 	@NonNull public static Mono<String> getGuildPrefix(@NonNull Snowflake guildId){
 		String prefix = guildPrefixes.get(guildId.asLong());
 		if(prefix != null) return Mono.just(prefix);
@@ -67,10 +61,6 @@ public class BotUtils {
 				.doOnNext(pref -> guildPrefixes.put(guildId.asLong(), pref));
 	}
 	private static final Map<Long, String> guildLanguages = new WeakHashMap<>();
-	/**
-	 * @param guildId The guild ID
-	 * @return The language used in the specified guild
-	 */
 	@NonNull public static Mono<String> getGuildLanguage(@NonNull Snowflake guildId){
 		String language = guildLanguages.get(guildId.asLong());
 		if(language != null) return Mono.just(language);
@@ -80,10 +70,6 @@ public class BotUtils {
 	}
 	
 	private static final Map<Long, String> userPrefixes = new WeakHashMap<>();
-	/**
-	 * @param userId The user ID
-	 * @return The prefix used by the specified user
-	 */
 	@NonNull public static Mono<String> getUserPrefix(@NonNull Snowflake userId){
 		String prefix = userPrefixes.get(userId.asLong());
 		if(prefix != null) return Mono.just(prefix);
@@ -93,10 +79,6 @@ public class BotUtils {
 				.doOnNext(pref -> userPrefixes.put(userId.asLong(), pref));
 	}
 	private static final Map<Long, String> userLanguages = new WeakHashMap<>();
-	/**
-	 * @param userId The user ID
-	 * @return The langauge used by the specified user
-	 */
 	@NonNull public static Mono<String> getUserLanguage(@NonNull Snowflake userId){
 		String language = userLanguages.get(userId.asLong());
 		if(language != null) return Mono.just(language);
@@ -106,15 +88,6 @@ public class BotUtils {
 				.doOnNext(lang -> userLanguages.put(userId.asLong(), lang));
 	}
 	
-	/**
-	 * Clamps a value
-	 *
-	 * @param min   The minimal value allowed
-	 * @param value The actual value
-	 * @param max   The maximal value allowed
-	 * @param <T>   The comparable type of the parameters
-	 * @return {@code min} if {@code value} is smaller than it, {@code max} if {@code value} is greater than it, otherwise {@code value}.
-	 */
 	@NonNull
 	public static <T extends Comparable<T>> T clamp(@NonNull T min, @NonNull T value, @NonNull T max){
 		return min.compareTo(value) > 0 ? min : max.compareTo(value) < 0 ? max : value;
@@ -211,7 +184,7 @@ public class BotUtils {
 	}
 	
 	/**
-	 * The list of all languages a {@link ResourceBundle} was found for. This is loaded in {@link #initialize()}
+	 * The list of all languages a {@code strings} {@link ResourceBundle} was found for.
 	 */
 	public static final List<String> availableLanguages = new ArrayList<>();
 	private static final Map<String, ResourceBundle> bundles = new HashMap<>();
@@ -220,6 +193,9 @@ public class BotUtils {
 	}
 	
 	/**
+	 * Gets the string with the provided {@code key} from the {@code strings} {@link ResourceBundle} and formats it
+	 * with the provided arguments using {@link MessageFormat#format(Object)}.
+	 *
 	 * @param language The language the returned string should be in
 	 * @param key      The key for the string in the {@link ResourceBundle}s
 	 * @param args     The arguments used to format the string

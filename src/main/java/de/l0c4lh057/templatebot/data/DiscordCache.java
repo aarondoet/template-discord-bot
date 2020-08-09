@@ -127,25 +127,9 @@ public class DiscordCache {
 			this.id = id;
 			this.permissions = permissions;
 		}
-		/**
-		 *
-		 * @return
-		 */
 		public int getRawPosition(){ return position; }
-		/**
-		 *
-		 * @return
-		 */
 		@NonNull public Snowflake getGuildId(){ return guildId; }
-		/**
-		 *
-		 * @return
-		 */
 		@NonNull public Snowflake getId(){ return id; }
-		/**
-		 *
-		 * @return
-		 */
 		@NonNull public PermissionSet getPermissions(){ return permissions; }
 	}
 	
@@ -164,15 +148,7 @@ public class DiscordCache {
 			this.members = members == null ? new HashMap<>() : members;
 			this.members.values().forEach(member -> member.guild = this);
 		}
-		/**
-		 *
-		 * @return
-		 */
 		@NonNull public Snowflake getId(){ return id; }
-		/**
-		 *
-		 * @return
-		 */
 		@NonNull public Snowflake getOwnerId(){ return ownerId; }
 		/**
 		 *
@@ -182,27 +158,12 @@ public class DiscordCache {
 			return roles.values().stream()
 					.sorted(Comparator.comparing(MinimalRole::getRawPosition).thenComparing(MinimalRole::getId));
 		}
-		/**
-		 *
-		 * @param channelId
-		 * @return
-		 */
 		@NonNull public Optional<MinimalChannel> getChannel(@NonNull Snowflake channelId){
 			return Optional.ofNullable(channels.get(channelId.asLong()));
 		}
-		/**
-		 *
-		 * @param memberId
-		 * @return
-		 */
 		@NonNull public Optional<MinimalMember> getMember(@NonNull Snowflake memberId){
 			return Optional.ofNullable(members.get(memberId.asLong()));
 		}
-		/**
-		 *
-		 * @param roleId
-		 * @return
-		 */
 		@NonNull public Optional<MinimalRole> getRole(@NonNull Snowflake roleId){
 			return Optional.ofNullable(roles.get(roleId.asLong()));
 		}
@@ -236,20 +197,8 @@ public class DiscordCache {
 			this.permissionOverwrites = permissionOverwrites;
 			this.nsfw = nsfw;
 		}
-		/**
-		 *
-		 * @return
-		 */
 		@NonNull public Snowflake getId(){ return id; }
-		/**
-		 *
-		 * @return
-		 */
 		@NonNull public Set<ExtendedPermissionOverwrite> getPermissionOverwrites(){ return permissionOverwrites; }
-		/**
-		 *
-		 * @return
-		 */
 		public boolean isNsfw() { return nsfw; }
 	}
 	
@@ -262,15 +211,7 @@ public class DiscordCache {
 			this.id = id;
 			this.roleIds = roleIds;
 		}
-		/**
-		 *
-		 * @return
-		 */
 		@NonNull public MinimalGuild getGuild(){ return guild; }
-		/**
-		 *
-		 * @return
-		 */
 		@NonNull public Snowflake getId(){ return id; }
 		/**
 		 *

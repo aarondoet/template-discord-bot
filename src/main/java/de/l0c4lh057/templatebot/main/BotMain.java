@@ -34,11 +34,9 @@ public class BotMain {
 				.setEnabledIntents(IntentSet.of(
 						Intent.DIRECT_MESSAGE_REACTIONS,
 						Intent.DIRECT_MESSAGES,
-						//Intent.GUILD_BANS,
 						Intent.GUILD_MESSAGE_REACTIONS,
 						Intent.GUILD_MESSAGES,
-						Intent.GUILDS//,
-						//Intent.GUILD_MEMBERS
+						Intent.GUILDS
 				))
 				// disable cache, using own cache to only cache needed data in data.DiscordCache
 				.setStoreService(new NoOpStoreService())

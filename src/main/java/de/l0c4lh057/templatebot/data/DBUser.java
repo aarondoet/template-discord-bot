@@ -19,17 +19,8 @@ public class DBUser {
 		this.language = language;
 	}
 	
-	/**
-	 * @return The user ID
-	 */
 	@NonNull public Snowflake getId(){ return id; }
-	/**
-	 * @return The prefix used by the user
-	 */
 	@NonNull public String getPrefix(){ return prefix; }
-	/**
-	 * @return The language specified for this user
-	 */
 	@NonNull public String getLanguage() { return language; }
 	
 	/**

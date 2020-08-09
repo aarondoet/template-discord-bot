@@ -135,25 +135,10 @@ public class PermissionManager {
 			this.isUser = isUser;
 		}
 		
-		/**
-		 * @return The ID of the target of this permission overwrite
-		 */
 		public Snowflake getTargetId(){ return targetId; }
-		/**
-		 * @return {@code true} if this permission overwrite is a whitelist entry, otherwise {@code false}
-		 */
 		public boolean isWhitelist(){ return isWhitelist; }
-		/**
-		 * @return {@code true} if this permission overwrite is a blacklist entry, otherwise {@code false}
-		 */
 		public boolean isBlacklist(){ return !isWhitelist; }
-		/**
-		 * @return {@code true} if this permission overwrite is for a user, otherwise {@code false}
-		 */
 		public boolean isUser(){ return isUser; }
-		/**
-		 * @return {@code true} if this permission overwrite is for a role, otherwise {@code false}
-		 */
 		public boolean isRole(){ return !isUser; }
 		
 		/**

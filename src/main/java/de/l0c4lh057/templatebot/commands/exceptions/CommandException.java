@@ -1,8 +1,6 @@
 package de.l0c4lh057.templatebot.commands.exceptions;
 
 import de.l0c4lh057.templatebot.utils.BotUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import reactor.util.annotation.NonNull;
 
 public class CommandException extends Exception {
@@ -15,10 +13,6 @@ public class CommandException extends Exception {
 		this.args = args;
 	}
 	
-	/**
-	 * @param language The language in which the error message should be
-	 * @return The error message
-	 */
 	@NonNull
 	public String getErrorMessage(@NonNull String language){
 		return BotUtils.getLanguageString(language, key, args);

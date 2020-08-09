@@ -82,50 +82,18 @@ public class Command {
 		};
 	}
 	
-	/**
-	 * @return The name of the command
-	 */
 	@NonNull public String getName(){ return name; }
 	
 	/**
 	 * @return All the aliases of the command (does not include the name returned by {@link #getName()})
 	 */
 	@NonNull public String[] getAliases(){ return aliases; }
-	
-	/**
-	 * @return The {@link Category} the command is in
-	 */
 	@NonNull public Category getCategory(){ return category; }
-	
-	/**
-	 * @return The {@link CommandExecutor} of this command
-	 */
 	@NonNull public CommandExecutor getExecutor(){ return executor; }
-	
-	/**
-	 * @return Whether the command can be executed in guilds
-	 */
 	public boolean isUsableInGuilds(){ return usableInGuilds; }
-	
-	/**
-	 * @return Whether this command can be executed in DMs
-	 */
 	public boolean isUsableInDMs(){ return usableInDMs; }
-	
-	/**
-	 * @param subCommand The name of the sub command
-	 * @return The {@link Command} with the passed value as name or alias or null if it does not exist
-	 */
 	@Nullable public Command getSubCommand(@NonNull String subCommand){ return subCommands.get(subCommand.toLowerCase()); }
-	
-	/**
-	 * @return The position of the command on the help page
-	 */
 	public int getHelpPagePosition(){ return helpPagePosition; }
-	
-	/**
-	 * @return Whether this command can only be used in NSFW channels and DMs
-	 */
 	public boolean isNsfw(){ return nsfw; }
 	
 	/**
@@ -313,11 +281,6 @@ public class Command {
 		
 		private CommandBuilder(){}
 		
-		/**
-		 * @param name    The name this command should have
-		 * @param aliases The list of aliases this command has
-		 * @return This {@link CommandBuilder} instance to allow chaining
-		 */
 		@NonNull
 		public CommandBuilder setName(@NonNull String name, @NonNull String... aliases){
 			this.name = name;
@@ -372,7 +335,7 @@ public class Command {
 		}
 		
 		/**
-		 * @param usableInDMs Whether this command can be executed in DMs
+		 * @param usableInDMs Whether this command can be executed in DMs (default: {@code false})
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
 		@NonNull
@@ -382,7 +345,7 @@ public class Command {
 		}
 		
 		/**
-		 * @param usableInGuilds Whether this command can be executed in guilds
+		 * @param usableInGuilds Whether this command can be executed in guilds (default: {@code true})
 		 * @return This {@link CommandBuilder} instance to allow chaining
 		 */
 		@NonNull
@@ -657,6 +620,9 @@ public class Command {
 		@NonNull
 		public String getName(@NonNull String lang){ return BotUtils.getLanguageString(lang, nameKey); }
 		/**
+		 * This function should never return {@code null}. If it is, either the categories have wrong helpPage values or
+		 * user input is forwarded to this function which both should not happen.
+		 *
 		 * @param helpPage The page number of the category
 		 * @return The {@link Category} with the specified help page number
 		 */
