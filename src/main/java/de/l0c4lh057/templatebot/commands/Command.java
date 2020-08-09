@@ -1,6 +1,6 @@
 package de.l0c4lh057.templatebot.commands;
 
-import de.l0c4lh057.templatebot.commands.exceptions.*;
+import de.l0c4lh057.templatebot.utils.exceptions.*;
 import de.l0c4lh057.templatebot.utils.BotUtils;
 import de.l0c4lh057.templatebot.utils.Permission;
 import de.l0c4lh057.templatebot.utils.ratelimits.NoRatelimit;
@@ -153,13 +153,13 @@ public class Command {
 		Snowflake authorId = event.getMessage().getAuthor().map(User::getId).orElseThrow();
 		Mono<?> executionMono;
 		if(requiresBotOwner && !BotUtils.botOwners.contains(authorId)){
-			executionMono = Mono.error(CommandException.notExecutable("exception.requiresbotowner"));
+			executionMono = Mono.error(BotException.notExecutable("exception.requiresbotowner"));
 		}else if(event.getGuildId().isPresent() && !usableInGuilds){
-			executionMono = Mono.error(CommandException.notExecutable("exception.notexecutableinguilds"));
+			executionMono = Mono.error(BotException.notExecutable("exception.notexecutableinguilds"));
 		}else if(event.getGuildId().isEmpty() && !usableInDMs){
-			executionMono = Mono.error(CommandException.notExecutable("exception.notexecutableindms"));
+			executionMono = Mono.error(BotException.notExecutable("exception.notexecutableindms"));
 		}else if(isRatelimited(event.getGuildId().orElse(null), event.getMessage().getChannelId(), authorId)){
-			executionMono = Mono.error(CommandException.ratelimited("exception.ratelimited"));
+			executionMono = Mono.error(BotException.ratelimited("exception.ratelimited"));
 		}else{
 			executionMono = PermissionManager.checkExecutability(event.getGuildId().orElse(null), authorId, event.getMessage().getChannelId(), requiredPermissions, requiresGuildOwner, nsfw)
 					.then(executor.execute(event, language, prefix, args));

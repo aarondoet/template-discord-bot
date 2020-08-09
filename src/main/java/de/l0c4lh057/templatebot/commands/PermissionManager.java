@@ -1,6 +1,6 @@
 package de.l0c4lh057.templatebot.commands;
 
-import de.l0c4lh057.templatebot.commands.exceptions.CommandException;
+import de.l0c4lh057.templatebot.utils.exceptions.BotException;
 import de.l0c4lh057.templatebot.data.DataHandler;
 import de.l0c4lh057.templatebot.data.DiscordCache;
 import discord4j.common.util.Snowflake;
@@ -34,7 +34,7 @@ public class PermissionManager {
 					List<Snowflake> roleWhitelist = lists.stream().filter(perms -> perms.size() > 0 && perms.get(0).isRole() && perms.get(0).isWhitelist()).findAny().orElseGet(Collections::emptyList).stream().map(CommandPermission::getTargetId).collect(Collectors.toList());
 					List<Snowflake> roleBlacklist = lists.stream().filter(perms -> perms.size() > 0 && perms.get(0).isRole() && perms.get(0).isBlacklist()).findAny().orElseGet(Collections::emptyList).stream().map(CommandPermission::getTargetId).collect(Collectors.toList());
 					boolean hasPerms = effectivePermissions.contains(Permission.ADMINISTRATOR);
-					if(onUserBlacklist) return Mono.error(CommandException.missingPermissions("exception.missingpermissions"));
+					if(onUserBlacklist) return Mono.error(BotException.missingPermissions("exception.missingpermissions"));
 					boolean blacklisted = false;
 					if(!hasPerms && roleIds.stream().anyMatch(roleWhitelist::contains)) hasPerms = true;
 					if(hasPerms && roleIds.stream().anyMatch(roleBlacklist::contains)){
@@ -46,7 +46,7 @@ public class PermissionManager {
 						if(requiredPermissions.getDefaultPermissions().containsAll(effectivePermissions)) hasPerms = true;
 					}
 					if(hasPerms) return Mono.empty();
-					else return Mono.error(CommandException.missingPermissions("exception.missingpermissions"));
+					else return Mono.error(BotException.missingPermissions("exception.missingpermissions"));
 				});
 	}
 	
@@ -57,7 +57,7 @@ public class PermissionManager {
 	 * @param channelId
 	 * @param permission
 	 * @return An empty {@link Mono} if the user has the needed permissions, otherwise a {@link Mono} containing a
-	 * {@link de.l0c4lh057.templatebot.commands.exceptions.CommandException} describing why the permissions are missing.
+	 * {@link BotException} describing why the permissions are missing.
 	 */
 	@NonNull
 	public static Mono<Void> checkExecutability(@Nullable Snowflake guildId, @NonNull Snowflake userId,
@@ -65,12 +65,12 @@ public class PermissionManager {
 	                                            boolean requiresGuildOwner, boolean requiresNsfwChannel){
 		if(guildId == null) return Mono.empty();
 		return Mono.justOrEmpty(DiscordCache.getGuild(guildId).flatMap(guild -> guild.getMember(userId)))
-				.switchIfEmpty(Mono.error(CommandException.missingPermissions("exception.notcached")))
+				.switchIfEmpty(Mono.error(BotException.missingPermissions("exception.notcached")))
 				.flatMap(member -> {
 					if(member.getGuild().getOwnerId().equals(member.getId())) return Mono.empty();
-					else if(requiresGuildOwner) return Mono.error(CommandException.missingPermissions("exception.requiresguildowner"));
+					else if(requiresGuildOwner) return Mono.error(BotException.missingPermissions("exception.requiresguildowner"));
 					else if(requiresNsfwChannel && !member.getGuild().getChannel(channelId).map(DiscordCache.MinimalChannel::isNsfw).orElse(false))
-						return Mono.error(CommandException.notExecutable("exception.requiresnsfwchannel"));
+						return Mono.error(BotException.notExecutable("exception.requiresnsfwchannel"));
 					else return checkExecutability(
 								guildId,
 								userId,
@@ -89,7 +89,7 @@ public class PermissionManager {
 	 * @param permission
 	 * @param requiresGuildOwner
 	 * @return An empty {@link Mono} if the user has the needed permissions, otherwise a {@link Mono} containing a
-	 * {@link de.l0c4lh057.templatebot.commands.exceptions.CommandException} describing why the permissions are missing.
+	 * {@link BotException} describing why the permissions are missing.
 	 */
 	public static Mono<Void> checkExecutability(@Nullable Snowflake guildId, @NonNull Snowflake userId,
 	                                            @NonNull Snowflake channelId, @NonNull de.l0c4lh057.templatebot.utils.Permission permission,
@@ -104,16 +104,16 @@ public class PermissionManager {
 	 * @param userId
 	 * @param permission
 	 * @return An empty {@link Mono} if the user has the needed permissions, otherwise a {@link Mono} containing a
-	 * {@link de.l0c4lh057.templatebot.commands.exceptions.CommandException} describing why the permissions are missing.
+	 * {@link BotException} describing why the permissions are missing.
 	 */
 	public static Mono<Void> checkExecutability(@Nullable Snowflake guildId, @NonNull Snowflake userId,
 	                                            @NonNull de.l0c4lh057.templatebot.utils.Permission permission, boolean requiresGuildOwner){
 		if(guildId == null) return Mono.empty();
 		return Mono.justOrEmpty(DiscordCache.getGuild(guildId).flatMap(guild -> guild.getMember(userId)))
-				.switchIfEmpty(Mono.error(CommandException.missingPermissions("exception.notcached")))
+				.switchIfEmpty(Mono.error(BotException.missingPermissions("exception.notcached")))
 				.flatMap(member -> {
 					if(member.getGuild().getOwnerId().equals(member.getId())) return Mono.empty();
-					else if(requiresGuildOwner) return Mono.error(CommandException.missingPermissions("exception.requiresguildowner"));
+					else if(requiresGuildOwner) return Mono.error(BotException.missingPermissions("exception.requiresguildowner"));
 					else return checkExecutability(
 								guildId,
 								userId,

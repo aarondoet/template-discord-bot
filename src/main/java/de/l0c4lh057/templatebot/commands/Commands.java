@@ -1,9 +1,8 @@
 package de.l0c4lh057.templatebot.commands;
 
-import de.l0c4lh057.templatebot.commands.exceptions.CommandException;
+import de.l0c4lh057.templatebot.utils.exceptions.BotException;
 import de.l0c4lh057.templatebot.main.BotMain;
 import de.l0c4lh057.templatebot.utils.BotUtils;
-import de.l0c4lh057.templatebot.utils.ratelimits.RatelimitType;
 import discord4j.common.GitProperties;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.message.ReactionAddEvent;
@@ -12,7 +11,6 @@ import discord4j.core.util.EntityUtil;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.EmbedFieldData;
 import discord4j.discordjson.json.MessageEditRequest;
-import io.github.bucket4j.Bandwidth;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
@@ -118,7 +116,7 @@ public class Commands {
 				)
 				.setUnknownSubCommandHandler(
 						Command.builder()
-								.setExecutor((event, language, prefix, args) -> Mono.error(CommandException.invalidArgument(null))) // TODO
+								.setExecutor((event, language, prefix, args) -> Mono.error(BotException.invalidArgument(null))) // TODO
 								.build()
 				)
 				.build().register();
