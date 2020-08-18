@@ -32,6 +32,7 @@ All class paths will be relative to the main path which is `de.l0c4lh057.templat
 * Add all command categories you want to `commands.Command.Category`. Commands will be grouped by those categories in the help command.
   Categories take a `helpPage` attribute which determines on which page the category should be shown. This number must be unique for every
   category, start at `1` and increment for every category. The second argument is the name key which is the key used to get the name in the current language from the `.properties` files.
+* Delete the `commands.ExampleCommandWithOwnClass` class and remove its usage in `commands.Commands` (at the top of `#registerCommands`). Also remove the help description of it in the `strings.properties` file (`help.example.*`). You can use that class as an example for commands that have their own class in case you prefer that style over the builder style.
 * Adjust enabled intents in `main.BotMain` (in `setEnabledIntents(IntentSet.of(...))`).
 * Create a `strings-{LANGUAGE-CODE}.properties` file for each language you want to support in the `resources` folder, e.g. `strings-de.properties` for German.
 * If you want to perform more actions on certain events, add event handlers to `main.Events`.
