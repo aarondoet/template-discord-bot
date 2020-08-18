@@ -42,6 +42,8 @@ public class Commands {
 	public static void registerCommands(){
 		logger.info("Registering all commands");
 		
+		new ExampleCommandWithOwnClass().register();
+		
 		Command.builder()
 				.setName("help")
 				.setExecutor((event, language, prefix, args) -> {

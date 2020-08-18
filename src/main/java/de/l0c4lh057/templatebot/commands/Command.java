@@ -41,6 +41,10 @@ public class Command {
 	private final boolean requiresGuildOwner;
 	@Nullable private final Permission requiredPermissions;
 	
+	Command(){
+		this(builder());
+	}
+	
 	private Command(CommandBuilder builder){
 		this.name = builder.name;
 		this.aliases = builder.aliases;
@@ -92,9 +96,13 @@ public class Command {
 	@NonNull public CommandExecutor getExecutor(){ return executor; }
 	public boolean isUsableInGuilds(){ return usableInGuilds; }
 	public boolean isUsableInDMs(){ return usableInDMs; }
+	public boolean requiresBotOwner(){ return requiresBotOwner; }
+	public boolean requiresGuildOwner(){ return requiresGuildOwner; }
 	@Nullable public Command getSubCommand(@NonNull String subCommand){ return subCommands.get(subCommand.toLowerCase()); }
 	public int getHelpPagePosition(){ return helpPagePosition; }
 	public boolean isNsfw(){ return nsfw; }
+	@NonNull public Ratelimit getRatelimit(){ return ratelimit; }
+	@NonNull public Permission getRequiredPermissions(){ return requiredPermissions; }
 	
 	/**
 	 * This function checks if the user/guild is rate limited.
@@ -108,18 +116,18 @@ public class Command {
 	 * @return Whether the guild/member/user/channel is rate limited
 	 */
 	public boolean isRatelimited(@Nullable Snowflake guildId, @NonNull Snowflake channelId, @NonNull Snowflake userId){
-		return ratelimit.isRatelimited(guildId, channelId, userId);
+		return getRatelimit().isRatelimited(guildId, channelId, userId);
 	}
 	
 	/**
 	 * Adds this command with name and aliases as key to {@link Commands#commands}.
 	 */
 	public void register(){
-		if(Commands.getCommand(name) != null || Arrays.stream(aliases).anyMatch(alias -> Commands.getCommand(alias) != null)){
-			logger.warn("Command {} is already registered", name);
+		if(Commands.getCommand(getName()) != null || Arrays.stream(aliases).anyMatch(alias -> Commands.getCommand(alias) != null)){
+			logger.warn("Command {} is already registered", getName());
 		}else{
-			Commands.commands.put(name.toLowerCase(), this);
-			for (String alias : aliases) {
+			Commands.commands.put(getName().toLowerCase(), this);
+			for (String alias : getAliases()) {
 				Commands.commands.put(alias.toLowerCase(), this);
 			}
 		}
@@ -152,19 +160,19 @@ public class Command {
 	@NonNull private Mono<Void> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args, boolean handleExceptions){
 		Snowflake authorId = event.getMessage().getAuthor().map(User::getId).orElseThrow();
 		Mono<?> executionMono;
-		if(requiresBotOwner && !BotUtils.botOwners.contains(authorId)){
+		if(requiresBotOwner() && !BotUtils.botOwners.contains(authorId)){
 			executionMono = Mono.error(BotException.notExecutable("exception.requiresbotowner"));
-		}else if(event.getGuildId().isPresent() && !usableInGuilds){
+		}else if(event.getGuildId().isPresent() && !isUsableInGuilds()){
 			executionMono = Mono.error(BotException.notExecutable("exception.notexecutableinguilds"));
-		}else if(event.getGuildId().isEmpty() && !usableInDMs){
+		}else if(event.getGuildId().isEmpty() && !isUsableInDMs()){
 			executionMono = Mono.error(BotException.notExecutable("exception.notexecutableindms"));
 		}else if(isRatelimited(event.getGuildId().orElse(null), event.getMessage().getChannelId(), authorId)){
 			executionMono = Mono.error(BotException.ratelimited("exception.ratelimited"));
 		}else{
-			executionMono = PermissionManager.checkExecutability(event.getGuildId().orElse(null), authorId, event.getMessage().getChannelId(), requiredPermissions, requiresGuildOwner, nsfw)
-					.then(executor.execute(event, language, prefix, args));
+			executionMono = PermissionManager.checkExecutability(event.getGuildId().orElse(null), authorId, event.getMessage().getChannelId(), getRequiredPermissions(), requiresGuildOwner(), isNsfw())
+					.then(getExecutor().execute(event, language, prefix, args));
 		}
-		if(handleExceptions) return handleExceptions(executionMono, event, language, name);
+		if(handleExceptions) return handleExceptions(executionMono, event, language, getName());
 		else return executionMono.then();
 	}
 	
@@ -257,12 +265,12 @@ public class Command {
 	 */
 	@Override
 	public boolean equals(@Nullable Object o){
-		return (o instanceof Command) && (o == this || ((Command)o).name.equals(name));
+		return (o instanceof Command) && (o == this || ((Command)o).getName().equals(getName()));
 	}
 	
 	@Override
 	public int hashCode(){
-		return name.hashCode();
+		return getName().hashCode();
 	}
 	
 	public static class CommandBuilder {
