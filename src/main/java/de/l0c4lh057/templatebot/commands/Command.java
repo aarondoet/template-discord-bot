@@ -605,6 +605,8 @@ public class Command {
 		 * Other than for sub commands the first argument (if present) will not get removed.
 		 * <p>
 		 * Neither {@link Category} not {@code helpPagePosition} nor {@code name} property will have an effect.
+		 * <p>
+		 * <b>DON'T FORGET to make this handler usable in DMs!</b>
 		 *
 		 * @param unknownSubCommandHandler The command that should get executed when no sub command matches
 		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
@@ -624,7 +626,10 @@ public class Command {
 		public Command build(){
 			if(unknownSubCommandHandler == null){
 				logger.warn("No unknown subcommand handler set for command collection {}", name);
-				unknownSubCommandHandler = builder().setExecutor((event, language, prefix, args) -> Mono.empty()).build();
+				unknownSubCommandHandler = builder()
+						.setUsableInDMs(true)
+						.setExecutor((event, language, prefix, args) -> Mono.empty())
+						.build();
 			}
 			return new Command(this);
 		}

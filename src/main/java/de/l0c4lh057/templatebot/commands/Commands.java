@@ -154,6 +154,7 @@ public class Commands {
 				)
 				.setUnknownSubCommandHandler(
 						Command.builder()
+								.setUsableInDMs(true)
 								.setExecutor((event, language, prefix, args) -> Mono.error(BotException.invalidArgument("command.prefix.invalidArgs", prefix)))
 								.build()
 				)
