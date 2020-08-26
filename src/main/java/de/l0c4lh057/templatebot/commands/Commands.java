@@ -48,6 +48,7 @@ public class Commands {
 		
 		Command.builder()
 				.setName("help")
+				.setUsableInDMs(true)
 				.setExecutor((event, language, prefix, args) -> {
 					if(!args.isEmpty()){
 						Command command = Commands.getCommand(args.get(0));
@@ -98,10 +99,12 @@ public class Commands {
 		
 		Command.collectionBuilder()
 				.setName("prefix")
+				.setUsableInDMs(true)
 				.setCategory(Command.Category.GENERAL)
 				.addSubCommand(
 						Command.builder()
 								.setName("get")
+								.setUsableInDMs(true)
 								.setExecutor((event, language, prefix, args) -> event.getMessage().getRestChannel()
 										.createMessage(EmbedData.builder()
 												.title(getLanguageString(language, "command.prefix.get.title"))
