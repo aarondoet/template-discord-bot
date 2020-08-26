@@ -111,6 +111,7 @@ public class DiscordCache {
 				new HashMap<>()
 		);
 		return Mono.when(
+				guild.getSelfMember().doOnNext(DiscordCache::addMember),
 				Mono.fromRunnable(() -> guilds.put(guild.getId().asLong(), minimalGuild)),
 				guild.getRoles().doOnNext(role -> minimalGuild.addRole(new MinimalRole(role.getRawPosition(), role.getGuildId(), role.getId(), role.getPermissions())))
 		);
