@@ -114,27 +114,6 @@ public class BotUtils {
 	}
 	
 	/**
-	 * @param language
-	 * @param prefix
-	 * @param category
-	 * @return
-	 */
-	@NonNull
-	public static Consumer<EmbedCreateSpec> getHelpSpec(@NonNull String language, @NonNull String prefix, @NonNull Command.Category category){
-		return ecs -> ecs
-				.setTitle(getLanguageString(language, "help.category.title", category.getName(language)))
-				.setDescription(
-						Commands.getCommands(category)
-								.sorted(Comparator.comparing(Command::getName))
-								.sorted(Comparator.comparing(Command::getHelpPagePosition))
-								.map(command -> getLanguageString(language, "help." + command.getName() + ".short", prefix))
-								.collect(Collectors.joining("\n"))
-				)
-				.setFooter(getLanguageString(language, "help.category.footer", category.getHelpPage(), Command.Category.values().length), null)
-				.setColor(BOT_COLOR);
-	}
-	
-	/**
 	 *
 	 * @param language
 	 * @param prefix
