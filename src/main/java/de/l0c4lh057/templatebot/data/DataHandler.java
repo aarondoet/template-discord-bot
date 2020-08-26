@@ -170,6 +170,14 @@ public class DataHandler {
 		);
 	}
 	
+	public static Mono<Void> setGuildPrefix(Snowflake guildId, String prefix){
+		return useConnection(con -> Mono.from(con.createStatement("UPDATE " + Tables.GUILDS.getName() + " SET prefix=$1 WHERE guildId=$2")
+				.bind("$1", prefix)
+				.bind("$2", guildId.asLong())
+				.execute()
+		).flatMapMany(Result::getRowsUpdated).then());
+	}
+	
 	/**
 	 * Retrieves the stored data of the user with the provided ID.
 	 *
@@ -183,6 +191,14 @@ public class DataHandler {
 				.execute())
 				.flatMap(result -> Mono.from(result.map((row, rowMetadata) -> DBUser.ofRow(row))))
 		);
+	}
+	
+	public static Mono<Void> setUserPrefix(Snowflake userId, String prefix){
+		return useConnection(con -> Mono.from(con.createStatement("UPDATE " + Tables.USERS.getName() + " SET prefix=$1 WHERE userId=$2")
+				.bind("$1", prefix)
+				.bind("$2", userId.asLong())
+				.execute()
+		).flatMapMany(Result::getRowsUpdated).then());
 	}
 	
 	/**

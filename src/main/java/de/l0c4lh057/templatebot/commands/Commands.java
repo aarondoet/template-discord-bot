@@ -1,5 +1,6 @@
 package de.l0c4lh057.templatebot.commands;
 
+import de.l0c4lh057.templatebot.data.DataHandler;
 import de.l0c4lh057.templatebot.utils.exceptions.BotException;
 import de.l0c4lh057.templatebot.main.BotMain;
 import de.l0c4lh057.templatebot.utils.BotUtils;
@@ -11,6 +12,7 @@ import discord4j.core.util.EntityUtil;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.EmbedFieldData;
 import discord4j.discordjson.json.MessageEditRequest;
+import discord4j.rest.util.Permission;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
@@ -113,12 +115,37 @@ public class Commands {
 				.addSubCommand(
 						Command.builder()
 								.setName("set")
-								.setExecutor((event, language, prefix, args) -> Mono.empty()) // TODO
+								.setRequiredPermissions("command.prefix.set", Permission.ADMINISTRATOR)
+								.setUsableInDMs(true)
+								.setExecutor((event, language, prefix, args) -> {
+									if(args.isEmpty()){
+										return Mono.error(BotException.invalidArgument("command.prefix.set.missingArgument"));
+									}else{
+										String newPrefix = args.getRemaining();
+										if(newPrefix.chars().anyMatch(Character::isWhitespace)) return Mono.error(BotException.invalidArgument("command.prefix.set.containsWhitespace"));
+										Mono<Void> mono;
+										if(event.getGuildId().isPresent()){
+											Snowflake guildId = event.getGuildId().get();
+											mono = DataHandler.setGuildPrefix(guildId, newPrefix)
+													.then(Mono.fromRunnable(()->BotUtils.setGuildPrefix(guildId, newPrefix)));
+										}else{
+											Snowflake userId = event.getMessage().getAuthor().orElseThrow().getId();
+											mono = DataHandler.setUserPrefix(userId, newPrefix)
+													.then(Mono.fromRunnable(()->BotUtils.setUserPrefix(userId, newPrefix)));
+										}
+										return mono.then(event.getMessage().getRestChannel().createMessage(EmbedData.builder()
+												.title(getLanguageString(language, "command.prefix.set.title"))
+												.description(getLanguageString(language, "command.prefix.set.description", prefix, newPrefix))
+												.color(BotUtils.COLOR_LIGHT_GREEN.getRGB())
+												.build()
+										));
+									}
+								})
 								.build()
 				)
 				.setUnknownSubCommandHandler(
 						Command.builder()
-								.setExecutor((event, language, prefix, args) -> Mono.error(BotException.invalidArgument(null))) // TODO
+								.setExecutor((event, language, prefix, args) -> Mono.error(BotException.invalidArgument("command.prefix.invalidArgs", prefix)))
 								.build()
 				)
 				.build().register();

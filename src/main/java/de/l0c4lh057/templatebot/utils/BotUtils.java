@@ -60,6 +60,9 @@ public class BotUtils {
 				.map(DBGuild::getPrefix)
 				.doOnNext(pref -> guildPrefixes.put(guildId.asLong(), pref));
 	}
+	public static void setGuildPrefix(Snowflake guildId, String prefix){
+		guildPrefixes.put(guildId.asLong(), prefix);
+	}
 	private static final Map<Long, String> guildLanguages = new WeakHashMap<>();
 	@NonNull public static Mono<String> getGuildLanguage(@NonNull Snowflake guildId){
 		String language = guildLanguages.get(guildId.asLong());
@@ -67,6 +70,9 @@ public class BotUtils {
 		return DataHandler.getGuild(guildId)
 				.map(DBGuild::getLanguage)
 				.doOnNext(lang -> guildLanguages.put(guildId.asLong(), lang));
+	}
+	public static void setGuildLanguage(Snowflake guildId, String lang){
+		guildLanguages.put(guildId.asLong(), lang);
 	}
 	
 	private static final Map<Long, String> userPrefixes = new WeakHashMap<>();
@@ -78,6 +84,9 @@ public class BotUtils {
 				.map(DBUser::getPrefix)
 				.doOnNext(pref -> userPrefixes.put(userId.asLong(), pref));
 	}
+	public static void setUserPrefix(Snowflake userId, String prefix){
+		userPrefixes.put(userId.asLong(), prefix);
+	}
 	private static final Map<Long, String> userLanguages = new WeakHashMap<>();
 	@NonNull public static Mono<String> getUserLanguage(@NonNull Snowflake userId){
 		String language = userLanguages.get(userId.asLong());
@@ -86,6 +95,9 @@ public class BotUtils {
 				.doOnNext(user -> userPrefixes.put(userId.asLong(), user.getPrefix()))
 				.map(DBUser::getLanguage)
 				.doOnNext(lang -> userLanguages.put(userId.asLong(), lang));
+	}
+	public static void setUserLanguage(Snowflake userId, String language){
+		userLanguages.put(userId.asLong(), language);
 	}
 	
 	@NonNull
