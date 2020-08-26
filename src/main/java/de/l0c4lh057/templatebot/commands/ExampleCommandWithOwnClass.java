@@ -1,6 +1,16 @@
 package de.l0c4lh057.templatebot.commands;
 
+import de.l0c4lh057.templatebot.utils.ratelimits.Ratelimit;
+import de.l0c4lh057.templatebot.utils.ratelimits.RatelimitFactory;
+import de.l0c4lh057.templatebot.utils.ratelimits.RatelimitType;
+import discord4j.rest.util.Permission;
+import discord4j.rest.util.PermissionSet;
+import io.github.bucket4j.Bandwidth;
 import reactor.util.annotation.NonNull;
+import reactor.util.annotation.Nullable;
+
+import java.time.Duration;
+import java.util.List;
 
 public class ExampleCommandWithOwnClass extends Command {
 	public ExampleCommandWithOwnClass(){
@@ -45,6 +55,7 @@ public class ExampleCommandWithOwnClass extends Command {
 		return true;
 	}
 	
+	@Nullable
 	@Override
 	public Command getSubCommand(@NonNull String subCommand) {
 		return null;
@@ -58,5 +69,25 @@ public class ExampleCommandWithOwnClass extends Command {
 	@Override
 	public boolean isNsfw() {
 		return false;
+	}
+	
+	private final Ratelimit ratelimit = RatelimitFactory.getRatelimit(RatelimitType.GUILD, List.of(Bandwidth.simple(4, Duration.ofMinutes(3))));
+	@NonNull
+	@Override
+	public Ratelimit getRatelimit() {
+		// NOTICE: the ratelimit instance should not get created new for every call of this function!
+		return ratelimit;
+	}
+	
+	@Nullable
+	@Override
+	public de.l0c4lh057.templatebot.utils.Permission getRequiredPermissions() {
+		return null;
+	}
+	
+	@NonNull
+	@Override
+	public PermissionSet getPermissionsNeededByBot() {
+		return PermissionSet.of(Permission.SEND_MESSAGES);
 	}
 }

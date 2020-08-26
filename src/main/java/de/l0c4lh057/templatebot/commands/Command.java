@@ -1,5 +1,6 @@
 package de.l0c4lh057.templatebot.commands;
 
+import de.l0c4lh057.templatebot.data.DiscordCache;
 import de.l0c4lh057.templatebot.utils.exceptions.*;
 import de.l0c4lh057.templatebot.utils.BotUtils;
 import de.l0c4lh057.templatebot.utils.Permission;
@@ -12,6 +13,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.discordjson.json.EmbedData;
+import discord4j.rest.util.PermissionSet;
 import io.github.bucket4j.Bandwidth;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,6 +42,7 @@ public class Command {
 	private final boolean requiresBotOwner;
 	private final boolean requiresGuildOwner;
 	@Nullable private final Permission requiredPermissions;
+	@NonNull private final PermissionSet permissionsNeededByBot;
 	
 	Command(){
 		this(builder());
@@ -59,6 +62,7 @@ public class Command {
 		this.requiresBotOwner = builder.requiresBotOwner;
 		this.requiresGuildOwner = builder.requiresGuildOwner;
 		this.requiredPermissions = builder.requiredPermissions;
+		this.permissionsNeededByBot = builder.permissionsNeededByBot;
 	}
 	
 	private Command(CommandCollectionBuilder builder){
@@ -74,6 +78,7 @@ public class Command {
 		this.requiresBotOwner = builder.requiresBotOwner;
 		this.requiresGuildOwner = builder.requiresGuildOwner;
 		this.requiredPermissions = builder.requiredPermissions;
+		this.permissionsNeededByBot = builder.permissionsNeededByBot;
 		Command unknownSubCommandHandler = builder.unknownSubCommandHandler;
 		this.executor = (event, language, prefix, args) -> {
 			if(!args.isEmpty()){
@@ -102,7 +107,8 @@ public class Command {
 	public int getHelpPagePosition(){ return helpPagePosition; }
 	public boolean isNsfw(){ return nsfw; }
 	@NonNull public Ratelimit getRatelimit(){ return ratelimit; }
-	@NonNull public Permission getRequiredPermissions(){ return requiredPermissions; }
+	@Nullable public Permission getRequiredPermissions(){ return requiredPermissions; }
+	@NonNull public PermissionSet getPermissionsNeededByBot(){ return permissionsNeededByBot; }
 	
 	/**
 	 * This function checks if the user/guild is rate limited.
@@ -160,7 +166,17 @@ public class Command {
 	@NonNull private Mono<Void> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args, boolean handleExceptions){
 		Snowflake authorId = event.getMessage().getAuthor().map(User::getId).orElseThrow();
 		Mono<?> executionMono;
-		if(requiresBotOwner() && !BotUtils.botOwners.contains(authorId)){
+		if(event.getGuildId().flatMap(DiscordCache::getGuild)
+				.map(guild -> guild.getMember(event.getClient().getSelfId())
+						.map(member -> member.getEffectivePermissions(event.getMessage().getChannelId()))
+						.map(effectivePermissions -> !effectivePermissions.containsAll(getPermissionsNeededByBot()))
+						.orElse(true)
+				)
+				.orElse(false)){
+			// bot needs certain permissions that is does not have
+			// TODO
+			executionMono = Mono.empty();
+		}else if(requiresBotOwner() && !BotUtils.botOwners.contains(authorId)){
 			executionMono = Mono.error(BotException.notExecutable("exception.requiresbotowner"));
 		}else if(event.getGuildId().isPresent() && !isUsableInGuilds()){
 			executionMono = Mono.error(BotException.notExecutable("exception.notexecutableinguilds"));
@@ -286,6 +302,7 @@ public class Command {
 		private boolean requiresBotOwner = false;
 		private boolean requiresGuildOwner = false;
 		private Permission requiredPermissions = null;
+		private PermissionSet permissionsNeededByBot = PermissionSet.none();
 		
 		private CommandBuilder(){}
 		
@@ -406,6 +423,17 @@ public class Command {
 		}
 		
 		/**
+		 *
+		 * @param permissions The permissions needed by this bot to execute the command
+		 * @return This {@link CommandBuilder} instance to allow chaining
+		 */
+		@NonNull
+		public CommandBuilder setPermissionsNeededByBot(@NonNull discord4j.rest.util.Permission... permissions){
+			this.permissionsNeededByBot = PermissionSet.of(permissions);
+			return this;
+		}
+		
+		/**
 		 * Creates a command instance with the values defined in this builder.
 		 *
 		 * @return The built {@link Command}
@@ -430,6 +458,7 @@ public class Command {
 		private boolean requiresBotOwner = false;
 		private boolean requiresGuildOwner = false;
 		private Permission requiredPermissions = null;
+		private PermissionSet permissionsNeededByBot = PermissionSet.none();
 		
 		private CommandCollectionBuilder(){}
 		
@@ -534,6 +563,17 @@ public class Command {
 		@NonNull
 		public CommandCollectionBuilder setRequiredPermissions(@NonNull String permissionName, @NonNull discord4j.rest.util.Permission... defaultPermissions){
 			this.requiredPermissions = Permission.of(permissionName, defaultPermissions);
+			return this;
+		}
+		
+		/**
+		 *
+		 * @param permissions The permissions needed by this bot to execute the command
+		 * @return This {@link CommandCollectionBuilder} instance to allow chaining
+		 */
+		@NonNull
+		public CommandCollectionBuilder setPermissionsNeededByBot(@NonNull discord4j.rest.util.Permission... permissions){
+			this.permissionsNeededByBot = PermissionSet.of(permissions);
 			return this;
 		}
 		
