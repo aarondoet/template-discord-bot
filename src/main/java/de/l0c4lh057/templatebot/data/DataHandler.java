@@ -9,14 +9,17 @@ import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Result;
+import io.r2dbc.spi.ValidationDepth;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.NonNull;
 
 import java.time.Duration;
 import java.util.Objects;
+import java.util.function.Function;
 
 public class DataHandler {
 	
@@ -49,6 +52,19 @@ public class DataHandler {
 	@NonNull
 	private static Mono<Connection> getConnection(){
 		return pool.create();
+	}
+	
+	@NonNull
+	private static <T> Mono<T> useConnection(Function<Connection, Mono<T>> function){
+		return getConnection().flatMap(con -> function.apply(con)
+				.flatMap(item -> Mono.from(con.validate(ValidationDepth.LOCAL))
+						.flatMap(validation -> validation ? Mono.from(con.close()).thenReturn(item) : Mono.just(item))
+				)
+		);
+	}
+	
+	public static Mono<Void> disconnect(){
+		return pool.disposeLater();
 	}
 	
 	private enum Tables {
@@ -93,17 +109,12 @@ public class DataHandler {
 				"isWhitelist BOOLEAN," +
 				"PRIMARY KEY(permissionName, guildId, targetId, isUser)" +
 				")";
-		return Mono.fromRunnable(() -> logger.info("Initializing database"))
-				.then(
-						getConnection()
-								.flatMap(connection -> Flux.from(connection.createBatch()
-										.add(createGuildsTable)
-										.add(createUsersTable)
-										.add(createPermissionsTable)
-										.execute())
-										.then(Mono.from(connection.close()))
-								)
-				);
+		return useConnection(con -> Mono.from(con.createBatch()
+				.add(createGuildsTable)
+				.add(createUsersTable)
+				.add(createPermissionsTable)
+				.execute()
+		).then());
 	}
 	
 	/**
