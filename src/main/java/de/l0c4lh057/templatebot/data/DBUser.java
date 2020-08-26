@@ -30,7 +30,7 @@ public class DBUser {
 	@NonNull
 	public static DBUser ofRow(@NonNull Row row){
 		return new DBUser(
-				Snowflake.of(row.get("guildId", Integer.class)),
+				Snowflake.of(row.get("userId", Integer.class)),
 				row.get("prefix", String.class),
 				row.get("language", String.class)
 		);
