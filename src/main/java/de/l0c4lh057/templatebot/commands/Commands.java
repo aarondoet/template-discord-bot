@@ -79,14 +79,20 @@ public class Commands {
 											.filter(ev -> ev.getMessageId().asString().equals(messageData.id()))
 											.filter(ev -> ev.getUserId().equals(event.getMessage().getAuthor().map(User::getId).orElseThrow()))
 											.filter(ev -> ev.getEmoji().equals(BotUtils.EMOJI_ARROW_LEFT) || ev.getEmoji().equals(BotUtils.EMOJI_ARROW_RIGHT))
-											.timeout(Duration.ofMinutes(2), event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).deleteAllReactions().then(Mono.empty()))
+											.timeout(
+													Duration.ofMinutes(2),
+													Mono.when(
+															event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).deleteOwnReaction(EntityUtil.getEmojiString(BotUtils.EMOJI_ARROW_LEFT)),
+															event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).deleteOwnReaction(EntityUtil.getEmojiString(BotUtils.EMOJI_ARROW_RIGHT))
+													).then(Mono.empty())
+											)
 											.flatMap(ev -> {
 												if(ev.getEmoji().equals(BotUtils.EMOJI_ARROW_LEFT)) helpPage.decrementAndGet();
 												else if(ev.getEmoji().equals(BotUtils.EMOJI_ARROW_RIGHT)) helpPage.incrementAndGet();
 												helpPage.set(BotUtils.clamp(1, helpPage.get(), Command.Category.values().length));
 												Command.Category newCategory = Command.Category.getCategoryByHelpPage(helpPage.get());
 												return Mono.when(
-														event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).deleteUserReaction(EntityUtil.getEmojiString(ev.getEmoji()), ev.getUserId()),
+														event.getGuildId().isEmpty() ? Mono.empty() : event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).deleteUserReaction(EntityUtil.getEmojiString(ev.getEmoji()), ev.getUserId()),
 														event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).edit(MessageEditRequest.builder()
 																.embed(BotUtils.getHelpEmbedData(language, prefix, Objects.requireNonNull(newCategory)))
 																.build()
