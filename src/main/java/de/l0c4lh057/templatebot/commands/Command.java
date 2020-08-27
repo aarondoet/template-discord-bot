@@ -22,6 +22,7 @@ import reactor.util.annotation.NonNull;
 import reactor.util.annotation.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static de.l0c4lh057.templatebot.utils.BotUtils.getLanguageString;
 
@@ -233,6 +234,15 @@ public class Command {
 				.onErrorResume(NotExecutableException.class, err -> event.getMessage().getRestChannel()
 						.createMessage(EmbedData.builder()
 								.title(getLanguageString(language, "exception.notexecutable.title"))
+								.description(err.getErrorMessage(language))
+								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
+								.build()
+						).then()
+						.onErrorResume(ex -> Mono.empty())
+				)
+				.onErrorResume(BotMissingPermissionsException.class, err -> event.getMessage().getRestChannel()
+						.createMessage(EmbedData.builder()
+								.title(getLanguageString(language, "exception.botmissingpermissions.title"))
 								.description(err.getErrorMessage(language))
 								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
 								.build()

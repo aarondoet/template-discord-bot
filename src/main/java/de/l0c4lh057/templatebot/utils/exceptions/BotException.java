@@ -57,5 +57,10 @@ public class BotException extends Exception {
 	public static RatelimitedException ratelimited(@NonNull String key, @NonNull Object... args){
 		return new RatelimitedException(key, args);
 	}
+	
+	@NonNull
+	public static BotMissingPermissionsException botMissingPermissions(@NonNull String key, @NonNull Object... args){
+		return new BotMissingPermissionsException(key, args);
+	}
 
 }
