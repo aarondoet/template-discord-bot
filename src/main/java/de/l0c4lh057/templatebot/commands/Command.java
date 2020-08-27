@@ -167,16 +167,18 @@ public class Command {
 	@NonNull private Mono<Void> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args, boolean handleExceptions){
 		Snowflake authorId = event.getMessage().getAuthor().map(User::getId).orElseThrow();
 		Mono<?> executionMono;
-		if(event.getGuildId().flatMap(DiscordCache::getGuild)
-				.map(guild -> guild.getMember(event.getClient().getSelfId())
+		Optional<PermissionSet> missingPermissions = event.getGuildId().flatMap(DiscordCache::getGuild)
+				.flatMap(guild -> guild.getMember(event.getClient().getSelfId())
 						.map(member -> member.getEffectivePermissions(event.getMessage().getChannelId()))
-						.map(effectivePermissions -> !effectivePermissions.containsAll(getPermissionsNeededByBot()))
-						.orElse(true)
-				)
-				.orElse(false)){
+						.map(effectivePermissions -> getPermissionsNeededByBot().andNot(effectivePermissions))
+				);
+		if(event.getGuildId().map(gId -> missingPermissions.map(permissions -> permissions.getRawValue() > 0).orElse(true)).orElse(false)){
 			// bot needs certain permissions that is does not have
-			// TODO
-			executionMono = Mono.empty();
+			executionMono = Mono.error(BotException.botMissingPermissions(
+					"exception.botmissingpermissions",
+					getPermissionsNeededByBot().stream().map(perm -> "`" + perm.name() + "``").collect(Collectors.joining(", ")),
+					missingPermissions.map(permissions -> permissions.stream().map(perm -> "`" + perm.name() + "`").collect(Collectors.joining(", "))).orElse("There was a caching problem and I could not get my own permissions. Please report this to the bot owner.")
+			));
 		}else if(requiresBotOwner() && !BotUtils.botOwners.contains(authorId)){
 			executionMono = Mono.error(BotException.notExecutable("exception.requiresbotowner"));
 		}else if(event.getGuildId().isPresent() && !isUsableInGuilds()){
