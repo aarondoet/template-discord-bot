@@ -178,6 +178,14 @@ public class DataHandler {
 		).flatMapMany(Result::getRowsUpdated).then());
 	}
 	
+	public static Mono<Void> setGuildLanguage(Snowflake guildId, String language){
+		return useConnection(con -> Mono.from(con.createStatement("UPDATE " + Tables.GUILDS.getName() + " SET language=$1 WHERE guildId=$2")
+				.bind("$1", language)
+				.bind("$2", guildId.asLong())
+				.execute()
+		).flatMapMany(Result::getRowsUpdated).then());
+	}
+	
 	/**
 	 * Retrieves the stored data of the user with the provided ID.
 	 *
@@ -196,6 +204,14 @@ public class DataHandler {
 	public static Mono<Void> setUserPrefix(Snowflake userId, String prefix){
 		return useConnection(con -> Mono.from(con.createStatement("UPDATE " + Tables.USERS.getName() + " SET prefix=$1 WHERE userId=$2")
 				.bind("$1", prefix)
+				.bind("$2", userId.asLong())
+				.execute()
+		).flatMapMany(Result::getRowsUpdated).then());
+	}
+	
+	public static Mono<Void> setUserLanguage(Snowflake userId, String language){
+		return useConnection(con -> Mono.from(con.createStatement("UPDATE " + Tables.USERS.getName() + " SET language=$1 WHERE userId=$2")
+				.bind("$1", language)
 				.bind("$2", userId.asLong())
 				.execute()
 		).flatMapMany(Result::getRowsUpdated).then());

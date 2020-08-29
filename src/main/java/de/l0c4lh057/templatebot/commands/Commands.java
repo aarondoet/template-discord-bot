@@ -15,6 +15,7 @@ import discord4j.discordjson.json.MessageEditRequest;
 import discord4j.rest.util.Permission;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.util.Strings;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.NonNull;
 import reactor.util.annotation.Nullable;
@@ -22,6 +23,7 @@ import reactor.util.annotation.Nullable;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static de.l0c4lh057.templatebot.utils.BotUtils.getLanguageString;
@@ -156,6 +158,79 @@ public class Commands {
 						Command.builder()
 								.setUsableInDMs(true)
 								.setExecutor((event, language, prefix, args) -> Mono.error(BotException.invalidArgument("command.prefix.invalidArgs", prefix)))
+								.build()
+				)
+				.build().register();
+		
+		Command.collectionBuilder()
+				.setName("language")
+				.setUsableInDMs(true)
+				.setCategory(Command.Category.GENERAL)
+				.addSubCommand(
+						Command.builder()
+								.setName("get")
+								.setUsableInDMs(true)
+								.setExecutor((event, language, prefix, args) -> event.getMessage().getRestChannel()
+										.createMessage(EmbedData.builder()
+												.title(getLanguageString(language, "command.language.get.title"))
+												.description(getLanguageString(language, "command.language.get.description", language))
+												.color(BotUtils.COLOR_LIGHT_GREEN.getRGB())
+												.build()
+										)
+								)
+								.build()
+				)
+				.addSubCommand(
+						Command.builder()
+								.setName("set")
+								.setRequiredPermissions("command.language.set", Permission.ADMINISTRATOR)
+								.setUsableInDMs(true)
+								.setExecutor((event, language, prefix, args) -> {
+									if(args.isEmpty()){
+										return Mono.error(BotException.invalidArgument("command.language.set.missingArgument"));
+									}else{
+										String newLanguage = args.getRemaining();
+										if(!BotUtils.getAvailableLanguages().contains(newLanguage))
+											return Mono.error(BotException.invalidArgument("command.language.set.doesNotExist", newLanguage, prefix));
+										Mono<Void> mono;
+										if(event.getGuildId().isPresent()){
+											Snowflake guildId = event.getGuildId().get();
+											mono = DataHandler.setGuildLanguage(guildId, newLanguage)
+													.then(Mono.fromRunnable(()->BotUtils.setGuildLanguage(guildId, newLanguage)));
+										}else{
+											Snowflake userId = event.getMessage().getAuthor().orElseThrow().getId();
+											mono = DataHandler.setUserLanguage(userId, newLanguage)
+													.then(Mono.fromRunnable(()->BotUtils.setUserLanguage(userId, newLanguage)));
+										}
+										return mono.then(event.getMessage().getRestChannel().createMessage(EmbedData.builder()
+												.title(getLanguageString(newLanguage, "command.language.set.title"))
+												.description(getLanguageString(newLanguage, "command.language.set.description", language, newLanguage))
+												.color(BotUtils.COLOR_LIGHT_GREEN.getRGB())
+												.build()
+										));
+									}
+								})
+								.build()
+				)
+				.addSubCommand(Command.builder()
+						.setName("list")
+						.setUsableInDMs(true)
+						.setExecutor((event, language, prefix, args) -> event.getMessage().getRestChannel()
+								.createMessage(EmbedData.builder()
+										.title(getLanguageString(language, "command.language.list.title"))
+										.description(getLanguageString(language, "command.language.list.description",
+												BotUtils.getAvailableLanguages().stream().map(lang -> "`" + lang + "`").collect(Collectors.joining(", "))
+										))
+										.color(BotUtils.BOT_COLOR.getRGB())
+										.build()
+								)
+						)
+						.build()
+				)
+				.setUnknownSubCommandHandler(
+						Command.builder()
+								.setUsableInDMs(true)
+								.setExecutor((event, language, prefix, args) -> Mono.error(BotException.invalidArgument("command.language.invalidArgs", prefix)))
 								.build()
 				)
 				.build().register();

@@ -177,7 +177,7 @@ public class BotUtils {
 	/**
 	 * The list of all languages a {@code strings} {@link ResourceBundle} was found for.
 	 */
-	public static final List<String> availableLanguages = new ArrayList<>();
+	private static final List<String> availableLanguages = new ArrayList<>();
 	private static final Map<String, ResourceBundle> bundles = new HashMap<>();
 	private static void loadResourceBundles(){
 		availableLanguages.forEach(lang -> bundles.put(lang, ResourceBundle.getBundle("strings", Locale.forLanguageTag(lang))));
@@ -196,6 +196,14 @@ public class BotUtils {
 	public static String getLanguageString(@NonNull String language, @NonNull String key, @NonNull Object... args){
 		if(args.length == 0) return bundles.get(language).getString(key);
 		else return new MessageFormat(bundles.get(language).getString(key), Locale.forLanguageTag(language)).format(args);
+	}
+	
+	/**
+	 *
+	 * @return
+	 */
+	public static List<String> getAvailableLanguages(){
+		return Collections.unmodifiableList(availableLanguages);
 	}
 	
 }
