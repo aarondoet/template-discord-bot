@@ -58,8 +58,8 @@ public class Events {
 								.then(
 										event.getGuildId().map(id -> BotUtils.getGuildPrefix(id).zipWith(BotUtils.getGuildLanguage(id)))
 												.orElseGet(() -> event.getMessage().getAuthor().map(User::getId).map(id -> BotUtils.getUserPrefix(id)
-														.zipWith(BotUtils.getUserLanguage(id))).orElseThrow()
-												)
+														.zipWith(BotUtils.getUserLanguage(id))
+												).orElseThrow())
 								)
 								.flatMap(TupleUtils.function((String prefix, String language) -> {
 									String content = event.getMessage().getContent();

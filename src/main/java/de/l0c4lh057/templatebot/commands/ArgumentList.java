@@ -107,8 +107,9 @@ public class ArgumentList extends ArrayList<String> {
 	}
 	
 	/**
-	 * This function skips empty arguments and increments the index, which means that the next call of this function
-	 * will return the argument after the one returned in the current call.
+	 * Returns the next argument and increments the current index.
+	 * <p>
+	 * This function will skip empty arguments by default, use {@link #getNext(boolean)} to change this behaviour.
 	 *
 	 * @return The next argument
 	 */
@@ -118,21 +119,48 @@ public class ArgumentList extends ArrayList<String> {
 	}
 	
 	/**
-	 * This function skips empty arguments.
+	 * Returns the next argument and increments the current index.
 	 *
-	 * @param increment If set to {@code true}, the index of the current argument will be increased. Otherwise it will
-	 *                  just return the next argument and not increase the index, meaning that the next call of a
-	 *                  {@code getNext} function will return the same argument again.
+	 * @param skipEmpty Whether empty arguments should be skipped or not
 	 * @return The next argument
 	 */
 	@NonNull
-	public String getNext(boolean increment){
-		return getNext(true, increment);
+	public String getNext(boolean skipEmpty){
+		return getNext(skipEmpty, true);
 	}
 	
 	/**
+	 * Returns the next argument without changing the current index. Calling this function multiple
+	 * times without calling {@link #getNext()} or {@link #getNext(boolean)} in between will always result in the
+	 * exact same result.
+	 * <p>
+	 * This function will skip empty arguments by default, use {@link #peekNext(boolean)} to change this behaviour.
 	 *
+	 * @return The next argument
+	 */
+	@NonNull
+	public String peekNext(){
+		return getNext(true, false);
+	}
+	
+	/**
+	 * Returns the next argument without changing the current index. Calling this function multiple
+	 * times with the same argument without calling {@link #getNext()} or {@link #getNext(boolean)} in between will
+	 * always result in the exact same result.
+	 * <p>
+	 * If {@code skipEmpty} is set to true the index will get set to the index of the next non-empty argument, meaning
+	 * that if {@code peekNext(false)} returns an empty argument, after calling {@code peekNext(true)} the function call
+	 * {@code peekNext(false)} will not return an empty argument anymore but the one returned by the previous call.
 	 *
+	 * @param skipEmpty Whether empty arguments should be skipped or not
+	 * @return The next argument
+	 */
+	@NonNull
+	public String peekNext(boolean skipEmpty){
+		return getNext(skipEmpty, false);
+	}
+	
+	/**
 	 * @param skipEmpty Whether empty arguments should get skipped. An argument is considered empty if it has the length
 	 *                  0 and they typically appear when a user auto completes emojis/mentions where a space is inserted
 	 *                  afterwards and then presses the space key again.
@@ -142,7 +170,7 @@ public class ArgumentList extends ArrayList<String> {
 	 * @return The next argument
 	 */
 	@NonNull
-	public String getNext(boolean skipEmpty, boolean increment){
+	private String getNext(boolean skipEmpty, boolean increment){
 		if(!skipEmpty) return get(increment ? index++ : index);
 		int j = index;
 		while(j < size() && isEmptyArgument(get(j))){
@@ -197,13 +225,19 @@ public class ArgumentList extends ArrayList<String> {
 	}
 	
 	/**
-	 * @return The index of the current argument
+	 * Returns the index of the next element. The index of the actual current element would be
+	 * {@code getCurrentIndex() - 1}.
+	 *
+	 * @return The index of the next argument
 	 */
 	public int getCurrentIndex(){
 		return index;
 	}
 	
 	/**
+	 * The element at the index passed to this function will be the next one returned by {@link #getNext()} and
+	 * {@link #peekNext()}.
+	 *
 	 * @param index The new index you want to use as a starting point
 	 */
 	public void setCurrentIndex(int index){
