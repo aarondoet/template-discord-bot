@@ -3,6 +3,7 @@ package de.l0c4lh057.templatebot.main;
 import de.l0c4lh057.templatebot.commands.ArgumentList;
 import de.l0c4lh057.templatebot.commands.Command;
 import de.l0c4lh057.templatebot.commands.Commands;
+import de.l0c4lh057.templatebot.commands.Context;
 import de.l0c4lh057.templatebot.data.DataHandler;
 import de.l0c4lh057.templatebot.data.DiscordCache;
 import de.l0c4lh057.templatebot.utils.BotUtils;
@@ -82,7 +83,7 @@ public class Events {
 									if(command == null) return Mono.empty();
 									
 									ArgumentList args = spaceIndex == -1 ? ArgumentList.empty() : ArgumentList.of(strippedContent.substring(spaceIndex + 1));
-									return command.execute(event, language, prefix, args);
+									return command.execute(Context.ofEvent(event), language, prefix, args);
 								}))
 						)
 		);

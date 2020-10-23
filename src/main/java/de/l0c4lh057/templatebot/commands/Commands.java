@@ -15,7 +15,6 @@ import discord4j.discordjson.json.MessageEditRequest;
 import discord4j.rest.util.Permission;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.util.Strings;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.NonNull;
 import reactor.util.annotation.Nullable;
@@ -51,7 +50,7 @@ public class Commands {
 		Command.builder()
 				.setName("help")
 				.setUsableInDMs(true)
-				.setExecutor((event, language, prefix, args) -> {
+				.setExecutor((context, language, prefix, args) -> {
 					if(!args.isEmpty()){
 						Command command = Commands.getCommand(args.get(0));
 						if(command != null){
@@ -64,7 +63,7 @@ public class Commands {
 								commandTree.add(cmd.getName());
 								command = cmd;
 							}
-							return event.getMessage().getRestChannel().createMessage(EmbedData.builder()
+							return context.respond(EmbedData.builder()
 									.title(getLanguageString(language, "help.command.title", commandName))
 									.description(getLanguageString(language, "help." + String.join(".", commandTree) + ".detailed", prefix))
 									.build()
@@ -73,19 +72,19 @@ public class Commands {
 					}
 					Command.Category category = BotUtils.getHelpPage(language, args);
 					AtomicInteger helpPage = new AtomicInteger(category.getHelpPage());
-					return event.getMessage().getRestChannel().createMessage(BotUtils.getHelpEmbedData(language, prefix, category))
+					return context.respond(BotUtils.getHelpEmbedData(language, prefix, category))
 							.flatMap(messageData -> Mono.when(
-									event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).createReaction(EntityUtil.getEmojiString(BotUtils.EMOJI_ARROW_LEFT))
-											.then(event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).createReaction(EntityUtil.getEmojiString(BotUtils.EMOJI_ARROW_RIGHT))),
-									event.getClient().on(ReactionAddEvent.class)
+									context.getChannel().getRestMessage(Snowflake.of(messageData.id())).createReaction(EntityUtil.getEmojiString(BotUtils.EMOJI_ARROW_LEFT))
+											.then(context.getChannel().getRestMessage(Snowflake.of(messageData.id())).createReaction(EntityUtil.getEmojiString(BotUtils.EMOJI_ARROW_RIGHT))),
+									context.getClient().on(ReactionAddEvent.class)
 											.filter(ev -> ev.getMessageId().asString().equals(messageData.id()))
-											.filter(ev -> ev.getUserId().equals(event.getMessage().getAuthor().map(User::getId).orElseThrow()))
+											.filter(ev -> ev.getUserId().equals(context.getAuthor().getId()))
 											.filter(ev -> ev.getEmoji().equals(BotUtils.EMOJI_ARROW_LEFT) || ev.getEmoji().equals(BotUtils.EMOJI_ARROW_RIGHT))
 											.timeout(
 													Duration.ofMinutes(2),
 													Mono.when(
-															event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).deleteOwnReaction(EntityUtil.getEmojiString(BotUtils.EMOJI_ARROW_LEFT)),
-															event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).deleteOwnReaction(EntityUtil.getEmojiString(BotUtils.EMOJI_ARROW_RIGHT))
+															context.getChannel().getRestMessage(Snowflake.of(messageData.id())).deleteOwnReaction(EntityUtil.getEmojiString(BotUtils.EMOJI_ARROW_LEFT)),
+															context.getChannel().getRestMessage(Snowflake.of(messageData.id())).deleteOwnReaction(EntityUtil.getEmojiString(BotUtils.EMOJI_ARROW_RIGHT))
 													).then(Mono.empty())
 											)
 											.flatMap(ev -> {
@@ -94,8 +93,8 @@ public class Commands {
 												helpPage.set(BotUtils.clamp(1, helpPage.get(), Command.Category.values().length));
 												Command.Category newCategory = Command.Category.getCategoryByHelpPage(helpPage.get());
 												return Mono.when(
-														event.getGuildId().isEmpty() ? Mono.empty() : event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).deleteUserReaction(EntityUtil.getEmojiString(ev.getEmoji()), ev.getUserId()),
-														event.getMessage().getRestChannel().getRestMessage(Snowflake.of(messageData.id())).edit(MessageEditRequest.builder()
+														context.isPrivateMessage() ? Mono.empty() : context.getChannel().getRestMessage(Snowflake.of(messageData.id())).deleteUserReaction(EntityUtil.getEmojiString(ev.getEmoji()), ev.getUserId()),
+														context.getChannel().getRestMessage(Snowflake.of(messageData.id())).edit(MessageEditRequest.builder()
 																.embed(BotUtils.getHelpEmbedData(language, prefix, Objects.requireNonNull(newCategory)))
 																.build()
 														)
@@ -113,14 +112,12 @@ public class Commands {
 						Command.builder()
 								.setName("get")
 								.setUsableInDMs(true)
-								.setExecutor((event, language, prefix, args) -> event.getMessage().getRestChannel()
-										.createMessage(EmbedData.builder()
-												.title(getLanguageString(language, "command.prefix.get.title"))
-												.description(getLanguageString(language, "command.prefix.get.description", prefix))
-												.color(BotUtils.COLOR_LIGHT_GREEN.getRGB())
-												.build()
-										)
-								)
+								.setExecutor((context, language, prefix, args) -> context.respond(EmbedData.builder()
+										.title(getLanguageString(language, "command.prefix.get.title"))
+										.description(getLanguageString(language, "command.prefix.get.description", prefix))
+										.color(BotUtils.COLOR_LIGHT_GREEN.getRGB())
+										.build()
+								))
 								.build()
 				)
 				.addSubCommand(
@@ -128,23 +125,23 @@ public class Commands {
 								.setName("set")
 								.setRequiredPermissions("command.prefix.set", Permission.ADMINISTRATOR)
 								.setUsableInDMs(true)
-								.setExecutor((event, language, prefix, args) -> {
+								.setExecutor((context, language, prefix, args) -> {
 									if(args.isEmpty()){
 										return Mono.error(BotException.invalidArgument("command.prefix.set.missingArgument"));
 									}else{
 										String newPrefix = args.getRemaining();
 										if(newPrefix.chars().anyMatch(Character::isWhitespace)) return Mono.error(BotException.invalidArgument("command.prefix.set.containsWhitespace"));
 										Mono<Void> mono;
-										if(event.getGuildId().isPresent()){
-											Snowflake guildId = event.getGuildId().get();
+										if(context.isGuildMessage()){
+											Snowflake guildId = context.getGuildId().orElseThrow();
 											mono = DataHandler.setGuildPrefix(guildId, newPrefix)
 													.then(Mono.fromRunnable(()->BotUtils.setGuildPrefix(guildId, newPrefix)));
 										}else{
-											Snowflake userId = event.getMessage().getAuthor().orElseThrow().getId();
+											Snowflake userId = context.getAuthor().getId();
 											mono = DataHandler.setUserPrefix(userId, newPrefix)
 													.then(Mono.fromRunnable(()->BotUtils.setUserPrefix(userId, newPrefix)));
 										}
-										return mono.then(event.getMessage().getRestChannel().createMessage(EmbedData.builder()
+										return mono.then(context.respond(EmbedData.builder()
 												.title(getLanguageString(language, "command.prefix.set.title"))
 												.description(getLanguageString(language, "command.prefix.set.description", prefix, newPrefix))
 												.color(BotUtils.COLOR_LIGHT_GREEN.getRGB())
@@ -157,7 +154,7 @@ public class Commands {
 				.setUnknownSubCommandHandler(
 						Command.builder()
 								.setUsableInDMs(true)
-								.setExecutor((event, language, prefix, args) -> Mono.error(BotException.invalidArgument("command.prefix.invalidArgs", prefix)))
+								.setExecutor((context, language, prefix, args) -> Mono.error(BotException.invalidArgument("command.prefix.invalidArgs", prefix)))
 								.build()
 				)
 				.build().register();
@@ -170,14 +167,12 @@ public class Commands {
 						Command.builder()
 								.setName("get")
 								.setUsableInDMs(true)
-								.setExecutor((event, language, prefix, args) -> event.getMessage().getRestChannel()
-										.createMessage(EmbedData.builder()
-												.title(getLanguageString(language, "command.language.get.title"))
-												.description(getLanguageString(language, "command.language.get.description", language))
-												.color(BotUtils.COLOR_LIGHT_GREEN.getRGB())
-												.build()
-										)
-								)
+								.setExecutor((context, language, prefix, args) -> context.respond(EmbedData.builder()
+										.title(getLanguageString(language, "command.language.get.title"))
+										.description(getLanguageString(language, "command.language.get.description", language))
+										.color(BotUtils.COLOR_LIGHT_GREEN.getRGB())
+										.build()
+								))
 								.build()
 				)
 				.addSubCommand(
@@ -185,7 +180,7 @@ public class Commands {
 								.setName("set")
 								.setRequiredPermissions("command.language.set", Permission.ADMINISTRATOR)
 								.setUsableInDMs(true)
-								.setExecutor((event, language, prefix, args) -> {
+								.setExecutor((context, language, prefix, args) -> {
 									if(args.isEmpty()){
 										return Mono.error(BotException.invalidArgument("command.language.set.missingArgument"));
 									}else{
@@ -193,16 +188,16 @@ public class Commands {
 										if(!BotUtils.getAvailableLanguages().contains(newLanguage))
 											return Mono.error(BotException.invalidArgument("command.language.set.doesNotExist", newLanguage, prefix));
 										Mono<Void> mono;
-										if(event.getGuildId().isPresent()){
-											Snowflake guildId = event.getGuildId().get();
+										if(context.isGuildMessage()){
+											Snowflake guildId = context.getGuildId().orElseThrow();
 											mono = DataHandler.setGuildLanguage(guildId, newLanguage)
 													.then(Mono.fromRunnable(()->BotUtils.setGuildLanguage(guildId, newLanguage)));
 										}else{
-											Snowflake userId = event.getMessage().getAuthor().orElseThrow().getId();
+											Snowflake userId = context.getAuthor().getId();
 											mono = DataHandler.setUserLanguage(userId, newLanguage)
 													.then(Mono.fromRunnable(()->BotUtils.setUserLanguage(userId, newLanguage)));
 										}
-										return mono.then(event.getMessage().getRestChannel().createMessage(EmbedData.builder()
+										return mono.then(context.respond(EmbedData.builder()
 												.title(getLanguageString(newLanguage, "command.language.set.title"))
 												.description(getLanguageString(newLanguage, "command.language.set.description", language, newLanguage))
 												.color(BotUtils.COLOR_LIGHT_GREEN.getRGB())
@@ -215,22 +210,21 @@ public class Commands {
 				.addSubCommand(Command.builder()
 						.setName("list")
 						.setUsableInDMs(true)
-						.setExecutor((event, language, prefix, args) -> event.getMessage().getRestChannel()
-								.createMessage(EmbedData.builder()
-										.title(getLanguageString(language, "command.language.list.title"))
-										.description(getLanguageString(language, "command.language.list.description",
-												BotUtils.getAvailableLanguages().stream().map(lang -> "`" + lang + "`").collect(Collectors.joining(", "))
-										))
-										.color(BotUtils.BOT_COLOR.getRGB())
-										.build()
-								)
-						)
+						.setExecutor((context, language, prefix, args) -> context.respond(EmbedData.builder()
+								.title(getLanguageString(language, "command.language.list.title"))
+								.description(
+										getLanguageString(language, "command.language.list.description",
+										BotUtils.getAvailableLanguages().stream().map(lang -> "`" + lang + "`").collect(Collectors.joining(", "))
+								))
+								.color(BotUtils.BOT_COLOR.getRGB())
+								.build()
+						))
 						.build()
 				)
 				.setUnknownSubCommandHandler(
 						Command.builder()
 								.setUsableInDMs(true)
-								.setExecutor((event, language, prefix, args) -> Mono.error(BotException.invalidArgument("command.language.invalidArgs", prefix)))
+								.setExecutor((context, language, prefix, args) -> Mono.error(BotException.invalidArgument("command.language.invalidArgs", prefix)))
 								.build()
 				)
 				.build().register();
@@ -239,7 +233,7 @@ public class Commands {
 				.setName("info")
 				.setUsableInDMs(true)
 				.setCategory(Command.Category.GENERAL)
-				.setExecutor((event, language, prefix, args) -> event.getMessage().getRestChannel().createMessage(EmbedData.builder()
+				.setExecutor((context, language, prefix, args) -> context.respond(EmbedData.builder()
 						.title(getLanguageString(language, "command.info.title"))
 						.description(getLanguageString(language, "command.info.general"))
 						.addField(EmbedFieldData.builder()

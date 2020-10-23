@@ -41,8 +41,7 @@ public class ExampleCommandWithOwnClass extends Command {
 	@NonNull
 	@Override
 	public CommandExecutor getExecutor() {
-		return (event, language, prefix, args) -> event.getMessage().getRestChannel()
-				.createMessage("this is a test command to demonstrate how to create commands with their own class");
+		return (context, language, prefix, args) -> context.respond("this is a test command to demonstrate how to create commands with their own class");
 	}
 	
 	@Override

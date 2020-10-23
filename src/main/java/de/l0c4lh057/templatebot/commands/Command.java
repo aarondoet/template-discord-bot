@@ -81,14 +81,14 @@ public class Command {
 		this.requiredPermissions = builder.requiredPermissions;
 		this.permissionsNeededByBot = builder.permissionsNeededByBot;
 		Command unknownSubCommandHandler = builder.unknownSubCommandHandler;
-		this.executor = (event, language, prefix, args) -> {
+		this.executor = (context, language, prefix, args) -> {
 			if(!args.isEmpty()){
 				Command command = subCommands.get(args.get(0).toLowerCase());
 				if(command != null){
-					return command.execute(event, language, prefix, args.subList(1, args.size()), false);
+					return command.execute(context, language, prefix, args.subList(1, args.size()), false);
 				}
 			}
-			return unknownSubCommandHandler.execute(event, language, prefix, args, false);
+			return unknownSubCommandHandler.execute(context, language, prefix, args, false);
 		};
 	}
 	
@@ -143,36 +143,36 @@ public class Command {
 	/**
 	 * Executes this command. If an error occurs it will automatically get caught and processed.
 	 *
-	 * @param event    The raw {@link MessageCreateEvent} that cause the call of this command
+	 * @param context  The {@link Context} of the event that cause the call of this command
 	 * @param language The language that should be used in responses
 	 * @param prefix   The bot prefix
 	 * @param args     The list of all arguments passed to this command
 	 * @return An empty {@link Mono}.
 	 */
-	@NonNull public Mono<Void> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args){
-		return execute(event, language, prefix, args, true);
+	@NonNull public Mono<Void> execute(@NonNull Context context, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args){
+		return execute(context, language, prefix, args, true);
 	}
 	
 	/**
 	 * Executes this command. If an error occurs and {@code handleExceptions} is set to true
 	 * it will automatically get caught and processed.
 	 *
-	 * @param event    The raw {@link MessageCreateEvent} that caused the call of this command
+	 * @param context  The {@link Context} of the event that caused the call of this command
 	 * @param language The language that should be used in responses
 	 * @param prefix   The bot prefix
 	 * @param args     The list of all arguments passed to this command
 	 * @return An empty {@link Mono}. It will contain an error if command execution failed and {@code handleExceptions}
 	 * is set to false.
 	 */
-	@NonNull private Mono<Void> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args, boolean handleExceptions){
-		Snowflake authorId = event.getMessage().getAuthor().map(User::getId).orElseThrow();
+	@NonNull private Mono<Void> execute(@NonNull Context context, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args, boolean handleExceptions){
+		Snowflake authorId = context.getAuthor().getId();
 		Mono<?> executionMono;
-		Optional<PermissionSet> missingPermissions = event.getGuildId().flatMap(DiscordCache::getGuild)
-				.flatMap(guild -> guild.getMember(event.getClient().getSelfId())
-						.map(member -> member.getEffectivePermissions(event.getMessage().getChannelId()))
+		Optional<PermissionSet> missingPermissions = context.getGuildId().flatMap(DiscordCache::getGuild)
+				.flatMap(guild -> guild.getMember(context.getClient().getSelfId())
+						.map(member -> member.getEffectivePermissions(context.getChannelId()))
 						.map(effectivePermissions -> getPermissionsNeededByBot().andNot(effectivePermissions))
 				);
-		if(event.getGuildId().map(gId -> missingPermissions.map(permissions -> permissions.getRawValue() > 0).orElse(true)).orElse(false)){
+		if(context.getGuildId().map(gId -> missingPermissions.map(permissions -> permissions.getRawValue() > 0).orElse(true)).orElse(false)){
 			// bot needs certain permissions that is does not have
 			executionMono = Mono.error(BotException.botMissingPermissions(
 					"exception.botmissingpermissions",
@@ -181,17 +181,17 @@ public class Command {
 			));
 		}else if(requiresBotOwner() && !BotUtils.botOwners.contains(authorId)){
 			executionMono = Mono.error(BotException.notExecutable("exception.requiresbotowner"));
-		}else if(event.getGuildId().isPresent() && !isUsableInGuilds()){
+		}else if(context.isGuildMessage() && !isUsableInGuilds()){
 			executionMono = Mono.error(BotException.notExecutable("exception.notexecutableinguilds"));
-		}else if(event.getGuildId().isEmpty() && !isUsableInDMs()){
+		}else if(context.isPrivateMessage() && !isUsableInDMs()){
 			executionMono = Mono.error(BotException.notExecutable("exception.notexecutableindms"));
-		}else if(isRatelimited(event.getGuildId().orElse(null), event.getMessage().getChannelId(), authorId)){
+		}else if(isRatelimited(context.getGuildId().orElse(null), context.getChannelId(), authorId)){
 			executionMono = Mono.error(BotException.ratelimited("exception.ratelimited"));
 		}else{
-			executionMono = PermissionManager.checkExecutability(event.getGuildId().orElse(null), authorId, event.getMessage().getChannelId(), getRequiredPermissions(), requiresGuildOwner(), isNsfw())
-					.then(getExecutor().execute(event, language, prefix, args));
+			executionMono = PermissionManager.checkExecutability(context.getGuildId().orElse(null), authorId, context.getChannelId(), getRequiredPermissions(), requiresGuildOwner(), isNsfw())
+					.then(getExecutor().execute(context, language, prefix, args));
 		}
-		if(handleExceptions) return handleExceptions(executionMono, event, language, getName());
+		if(handleExceptions) return handleExceptions(executionMono, context, language, getName());
 		else return executionMono.then();
 	}
 	
@@ -199,68 +199,51 @@ public class Command {
 	 * This function simply catches all the exceptions that could happen on when executing the command.
 	 *
 	 * @param executionMono The result {@link Mono} got by command execution
-	 * @param event         The raw {@link MessageCreateEvent} that caused the call of this command
+	 * @param context       The {@link Context} of the event that caused the call of this command
 	 * @param language      The language that should be used in responses
 	 * @param commandName   The name of the command
 	 * @return An empty {@link Mono}
 	 */
-	@NonNull private static Mono<Void> handleExceptions(@NonNull Mono<?> executionMono, @NonNull MessageCreateEvent event, @NonNull String language, @NonNull String commandName){
+	@NonNull private static Mono<Void> handleExceptions(@NonNull Mono<?> executionMono, @NonNull Context context, @NonNull String language, @NonNull String commandName){
 		return executionMono.then()
-				.onErrorResume(MissingPermissionsException.class, err -> event.getMessage().getRestChannel()
-						.createMessage(EmbedData.builder()
-								.title(getLanguageString(language, "exception.missingpermissions.title"))
-								.description(err.getErrorMessage(language))
-								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
-								.build()
-						).then()
-						.onErrorResume(ex -> Mono.empty())
-				)
-				.onErrorResume(InvalidArgumentException.class, err -> event.getMessage().getRestChannel()
-						.createMessage(EmbedData.builder()
-								.title(getLanguageString(language, "exception.invalidargument.title"))
-								.description(err.getErrorMessage(language))
-								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
-								.build()
-						).then()
-						.onErrorResume(ex -> Mono.empty())
-				)
-				.onErrorResume(RatelimitedException.class, err -> event.getMessage().getRestChannel()
-						.createMessage(EmbedData.builder()
-								.title(getLanguageString(language, "exception.ratelimited.title"))
-								.description(err.getErrorMessage(language))
-								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
-								.build()
-						).then()
-						.onErrorResume(ex -> Mono.empty())
-				)
-				.onErrorResume(NotExecutableException.class, err -> event.getMessage().getRestChannel()
-						.createMessage(EmbedData.builder()
-								.title(getLanguageString(language, "exception.notexecutable.title"))
-								.description(err.getErrorMessage(language))
-								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
-								.build()
-						).then()
-						.onErrorResume(ex -> Mono.empty())
-				)
-				.onErrorResume(BotMissingPermissionsException.class, err -> event.getMessage().getRestChannel()
-						.createMessage(EmbedData.builder()
-								.title(getLanguageString(language, "exception.botmissingpermissions.title"))
-								.description(err.getErrorMessage(language))
-								.color(BotUtils.COLOR_LIGHT_RED.getRGB())
-								.build()
-						).then()
-						.onErrorResume(ex -> Mono.empty())
-				)
+				.onErrorResume(MissingPermissionsException.class, err -> context.respond(EmbedData.builder()
+						.title(getLanguageString(language, "exception.missingpermissions.title"))
+						.description(err.getErrorMessage(language))
+						.color(BotUtils.COLOR_LIGHT_RED.getRGB())
+						.build()
+				).then().onErrorResume(ex -> Mono.empty()))
+				.onErrorResume(InvalidArgumentException.class, err -> context.respond(EmbedData.builder()
+						.title(getLanguageString(language, "exception.invalidargument.title"))
+						.description(err.getErrorMessage(language))
+						.color(BotUtils.COLOR_LIGHT_RED.getRGB())
+						.build()
+				).then().onErrorResume(ex -> Mono.empty()))
+				.onErrorResume(RatelimitedException.class, err -> context.respond(EmbedData.builder()
+						.title(getLanguageString(language, "exception.ratelimited.title"))
+						.description(err.getErrorMessage(language))
+						.color(BotUtils.COLOR_LIGHT_RED.getRGB())
+						.build()
+				).then().onErrorResume(ex -> Mono.empty()))
+				.onErrorResume(NotExecutableException.class, err -> context.respond(EmbedData.builder()
+						.title(getLanguageString(language, "exception.notexecutable.title"))
+						.description(err.getErrorMessage(language))
+						.color(BotUtils.COLOR_LIGHT_RED.getRGB())
+						.build()
+				).then().onErrorResume(ex -> Mono.empty()))
+				.onErrorResume(BotMissingPermissionsException.class, err -> context.respond(EmbedData.builder()
+						.title(getLanguageString(language, "exception.botmissingpermissions.title"))
+						.description(err.getErrorMessage(language))
+						.color(BotUtils.COLOR_LIGHT_RED.getRGB())
+						.build()
+				).then().onErrorResume(ex -> Mono.empty()))
 				.onErrorResume(err -> {
 					logger.error("Unexpected exception when executing command " + commandName, err);
-					return event.getMessage().getRestChannel()
-							.createMessage(EmbedData.builder()
-									.title(getLanguageString(language, "exception.unknown.title"))
-									.description(getLanguageString(language, "exception.unknown"))
-									.color(BotUtils.COLOR_DARK_RED.getRGB())
-									.build()
-							).then()
-							.onErrorResume(ex -> Mono.empty());
+					return context.respond(EmbedData.builder()
+							.title(getLanguageString(language, "exception.unknown.title"))
+							.description(getLanguageString(language, "exception.unknown"))
+							.color(BotUtils.COLOR_DARK_RED.getRGB())
+							.build()
+					).then().onErrorResume(ex -> Mono.empty());
 				});
 	}
 	
@@ -640,7 +623,7 @@ public class Command {
 				logger.warn("No unknown subcommand handler set for command collection {}", name);
 				unknownSubCommandHandler = builder()
 						.setUsableInDMs(true)
-						.setExecutor((event, language, prefix, args) -> Mono.empty())
+						.setExecutor((context, language, prefix, args) -> Mono.empty())
 						.build();
 			}
 			return new Command(this);
@@ -650,7 +633,7 @@ public class Command {
 	public interface CommandExecutor {
 		/**
 		 *
-		 * @param event    The raw {@link MessageCreateEvent} that caused the execution of this command
+		 * @param context  The raw {@link MessageCreateEvent} that caused the execution of this command
 		 * @param language The language used in the {@link discord4j.core.object.entity.Guild} or
 		 *                 {@link discord4j.core.object.entity.channel.PrivateChannel} this command got executed in
 		 * @param prefix   The prefix used in the {@link discord4j.core.object.entity.Guild} or
@@ -660,7 +643,7 @@ public class Command {
 		 * Mono.
 		 */
 		@NonNull
-		Mono<?> execute(@NonNull MessageCreateEvent event, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args);
+		Mono<?> execute(@NonNull Context context, @NonNull String language, @NonNull String prefix, @NonNull ArgumentList args);
 	}
 	
 	public enum Category {
