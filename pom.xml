@@ -17,13 +17,13 @@
 		<dependency>
 			<groupId>io.github.cdimascio</groupId>
 			<artifactId>java-dotenv</artifactId>
-			<version>5.2.1</version>
+			<version>5.2.2</version>
 		</dependency>
 		<!-- Discord4J -->
 		<dependency>
 			<groupId>com.discord4j</groupId>
 			<artifactId>discord4j-core</artifactId>
-			<version>3.1.0</version>
+			<version>3.1.1</version>
 		</dependency>
 		<!-- Bucket4J -->
 		<dependency>
@@ -52,13 +52,13 @@
 		<dependency>
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-postgresql</artifactId>
-			<version>0.8.4.RELEASE</version>
+			<version>0.8.5.RELEASE</version>
 		</dependency>
 		<!-- R2DBC-Pool -->
 		<dependency>
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-pool</artifactId>
-			<version>0.8.3.RELEASE</version>
+			<version>0.8.4.RELEASE</version>
 		</dependency>
 	</dependencies>
 	
